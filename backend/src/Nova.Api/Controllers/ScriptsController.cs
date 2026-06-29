@@ -7,7 +7,7 @@ using Nova.Domain.Scripts;
 namespace Nova.Api.Controllers;
 
 [ApiController]
-[Route("api/v{version:apiVersion}/[controller]")]
+[Route("api/v1/[controller]")]
 [Authorize]
 public sealed class ScriptsController : ControllerBase
 {
@@ -126,3 +126,4 @@ public class {className} : MonoBehaviour
     private static ScriptDto MapScript(Script s) =>
         new(s.Id, s.ProjectId, s.Name, s.FullyQualifiedClassName, s.CurrentSource, s.CurrentVersion, s.Compiles, s.ErrorCount, s.WarningCount, s.UpdatedAtUtc);
 }
+

@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Nova.Api.Controllers;
 
 [ApiController]
-[Route("api/v{version:apiVersion}/[controller]")]
+[Route("api/v1/[controller]")]
 public sealed class AuthController : ControllerBase
 {
     private readonly IUserRepository _users;
@@ -89,3 +89,4 @@ public sealed class AuthController : ControllerBase
     private static UserDto MapUser(User u) =>
         new(u.Id, u.Email, u.DisplayName, u.Role.ToString(), u.AvatarUrl);
 }
+

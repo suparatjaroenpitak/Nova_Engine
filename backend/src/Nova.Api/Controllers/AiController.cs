@@ -5,7 +5,7 @@ using Nova.Application.Abstractions;
 namespace Nova.Api.Controllers;
 
 [ApiController]
-[Route("api/v{version:apiVersion}/ai")]
+[Route("api/v1/ai")]
 [Authorize]
 public sealed class AiController : ControllerBase
 {
@@ -34,3 +34,4 @@ public sealed class AiController : ControllerBase
         }
     }
 }
+

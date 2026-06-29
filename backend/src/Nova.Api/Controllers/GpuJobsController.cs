@@ -7,7 +7,7 @@ using Nova.Domain.Jobs;
 namespace Nova.Api.Controllers;
 
 [ApiController]
-[Route("api/v{version:apiVersion}/gpu-jobs")]
+[Route("api/v1/gpu-jobs")]
 [Authorize]
 public sealed class GpuJobsController : ControllerBase
 {
@@ -74,3 +74,4 @@ public sealed class GpuJobsController : ControllerBase
     private static GpuJobDto MapJob(GpuJob j) =>
         new(j.Id, j.Type, j.Status.ToString(), j.Provider, j.Gpu, j.ProgressPct, j.Error, j.ResultJson, j.CreatedAtUtc);
 }
+

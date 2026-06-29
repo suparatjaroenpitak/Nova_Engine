@@ -7,7 +7,7 @@ using Nova.Domain.Scenes;
 namespace Nova.Api.Controllers;
 
 [ApiController]
-[Route("api/v{version:apiVersion}/[controller]")]
+[Route("api/v1/[controller]")]
 [Authorize]
 public sealed class ScenesController : ControllerBase
 {
@@ -92,3 +92,4 @@ public sealed class ScenesController : ControllerBase
         );
     }
 }
+

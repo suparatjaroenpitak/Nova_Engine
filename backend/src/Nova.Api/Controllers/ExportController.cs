@@ -5,7 +5,7 @@ using Nova.Application.Abstractions;
 namespace Nova.Api.Controllers;
 
 [ApiController]
-[Route("api/v{version:apiVersion}/[controller]")]
+[Route("api/v1/[controller]")]
 [Authorize]
 public sealed class ExportController : ControllerBase
 {
@@ -27,3 +27,4 @@ public sealed class ExportController : ControllerBase
         return Ok(artifact);
     }
 }
+

@@ -7,7 +7,7 @@ using Nova.Domain.Projects;
 namespace Nova.Api.Controllers;
 
 [ApiController]
-[Route("api/v{version:apiVersion}/[controller]")]
+[Route("api/v1/[controller]")]
 [Authorize]
 public sealed class ProjectsController : ControllerBase
 {
@@ -84,3 +84,4 @@ public sealed class ProjectsController : ControllerBase
     private static ProjectDto MapProject(Project p) =>
         new(p.Id, p.Name, p.Description, p.OwnerId, p.Visibility.ToString(), p.RenderPipeline, p.Is3D, p.CreatedAtUtc, p.Scenes?.Count ?? 0);
 }
+

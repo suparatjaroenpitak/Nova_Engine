@@ -7,7 +7,7 @@ using Nova.Domain.Packages;
 namespace Nova.Api.Controllers;
 
 [ApiController]
-[Route("api/v{version:apiVersion}/[controller]")]
+[Route("api/v1/[controller]")]
 [Authorize]
 public sealed class PackagesController : ControllerBase
 {
@@ -50,3 +50,4 @@ public sealed class PackagesController : ControllerBase
     private static PackageDto MapPackage(Package p) =>
         new(p.Id, p.Name, p.Version, p.Source, p.IsEnabled);
 }
+

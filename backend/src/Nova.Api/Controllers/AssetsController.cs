@@ -10,7 +10,7 @@ using Nova.Infrastructure.Persistence;
 namespace Nova.Api.Controllers;
 
 [ApiController]
-[Route("api/v{version:apiVersion}/[controller]")]
+[Route("api/v1/[controller]")]
 [Authorize]
 public sealed class AssetsController : ControllerBase
 {
@@ -125,3 +125,4 @@ public sealed class AssetsController : ControllerBase
         };
     }
 }
+

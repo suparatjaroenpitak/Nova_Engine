@@ -9,7 +9,7 @@ using Nova.Infrastructure.Persistence;
 namespace Nova.Api.Controllers;
 
 [ApiController]
-[Route("api/v{version:apiVersion}/[controller]")]
+[Route("api/v1/[controller]")]
 [Authorize]
 public sealed class ComponentsController : ControllerBase
 {
@@ -85,3 +85,4 @@ public sealed class ComponentsController : ControllerBase
     private static ComponentDto MapDto(GameComponent c) =>
         new(c.Id, c.GameObjectId, c.Kind, c.Enabled, c.PropertiesJson, c.Order);
 }
+
