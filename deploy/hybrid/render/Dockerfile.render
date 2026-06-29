@@ -6,17 +6,17 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Cache NuGet packages
-COPY Directory.Build.props .
-COPY src/Nova.Domain/Nova.Domain.csproj src/Nova.Domain/
-COPY src/Nova.Application/Nova.Application.csproj src/Nova.Application/
-COPY src/Nova.Infrastructure/Nova.Infrastructure.csproj src/Nova.Infrastructure/
-COPY src/Nova.Api/Nova.Api.csproj src/Nova.Api/
-RUN dotnet restore src/Nova.Api/Nova.Api.csproj
+COPY backend/Directory.Build.props .
+COPY backend/src/Nova.Domain/Nova.Domain.csproj backend/src/Nova.Domain/
+COPY backend/src/Nova.Application/Nova.Application.csproj backend/src/Nova.Application/
+COPY backend/src/Nova.Infrastructure/Nova.Infrastructure.csproj backend/src/Nova.Infrastructure/
+COPY backend/src/Nova.Api/Nova.Api.csproj backend/src/Nova.Api/
+RUN dotnet restore backend/src/Nova.Api/Nova.Api.csproj
 
 # Build
 COPY . .
-RUN dotnet build src/Nova.Api/Nova.Api.csproj -c Release -o /app/build --no-restore
-RUN dotnet publish src/Nova.Api/Nova.Api.csproj -c Release -o /app/publish --no-build
+RUN dotnet build backend/src/Nova.Api/Nova.Api.csproj -c Release -o /app/build --no-restore
+RUN dotnet publish backend/src/Nova.Api/Nova.Api.csproj -c Release -o /app/publish --no-build
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 RUN apt-get update && apt-get install -y curl --no-install-recommends && rm -rf /var/lib/apt/lists/*
