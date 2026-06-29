@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nova-api
+  namespace: nova
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: nova-api } }
+  template:
+    metadata: { labels: { app: nova-api } }
+    spec:
+      containers:
+        - name: api
+          image: novaengine/api:latest
+          ports: [{ containerPort: 5080 }]
+          envFrom:
+            - configMapRef: { name: nova-config }
+            - secretRef: { name: nova-secrets }
+          readinessProbe:
+            httpGet: { path: /health, port: 5080 }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /health, port: 5080 }
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits: { cpu: "1000m", memory: "1Gi" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: nova-api, namespace: nova }
+spec:
+  selector: { app: nova-api }
+  ports: [{ port: 80, targetPort: 5080 }]

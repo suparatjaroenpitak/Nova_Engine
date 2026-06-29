@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nova-config
+  namespace: nova
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:5080"
+  MinIO__Endpoint: "nova-minio:9000"
+  MinIO__Bucket: "nova-assets"
+  MinIO__Secure: "false"
+  Gpu__Provider: "LocalStub"
+  Ai__Provider: "LocalStub"
+  Cors__AllowedOrigins__0: "https://nova.example.com"

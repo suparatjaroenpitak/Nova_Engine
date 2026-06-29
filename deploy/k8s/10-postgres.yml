@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nova-postgres
+  namespace: nova
+spec:
+  serviceName: nova-postgres
+  replicas: 1
+  selector:
+    matchLabels: { app: nova-postgres }
+  template:
+    metadata:
+      labels: { app: nova-postgres }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports: [{ containerPort: 5432 }]
+          env:
+            # Add POSTGRES_USER and POSTGRES_PASSWORD keys to nova-secrets.
+            - { name: POSTGRES_USER,     valueFrom: { secretKeyRef: { name: nova-secrets, key: POSTGRES_USER } } }
+            - { name: POSTGRES_PASSWORD, valueFrom: { secretKeyRef: { name: nova-secrets, key: POSTGRES_PASSWORD } } }
+            - { name: POSTGRES_DB,       value: nova_engine }
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/postgresql/data }
+          readinessProbe:
+            exec: { command: ["pg_isready", "-U", "nova"] }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources: { requests: { storage: 10Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: nova-postgres, namespace: nova }
+spec:
+  selector: { app: nova-postgres }
+  ports: [{ port: 5432, targetPort: 5432 }]

@@ -1,0 +1,12 @@
+**/bin/
+**/obj/
+node_modules/
+dist/
+.vite/
+.git/
+data/
+postgres-data/
+redis-data/
+minio-data/
+*.log
+.env
