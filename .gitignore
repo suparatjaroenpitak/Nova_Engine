@@ -39,8 +39,13 @@ secrets/
 # ---------- IDE ----------
 .idea/
 .vscode/
+.vs/
 *.swp
 .DS_Store
+
+# ---------- Build / Config ----------
+**/Properties/
+appsettings.*.Production.json
 
 # ---------- Build artifacts / data ----------
 data/
@@ -50,3 +55,4 @@ redis-data/
 minio-data/
 backend-data/
 *.log
+backend/docker/Nova.Api.Dockerfile

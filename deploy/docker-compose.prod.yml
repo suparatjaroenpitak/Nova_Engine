@@ -1,0 +1,116 @@
+# Nova Engine — Production Docker Compose
+# Use this on any VPS (Oracle Always Free, Hetzner, DigitalOcean, etc.)
+#
+# Start:   docker compose -f deploy/docker-compose.prod.yml up -d
+# Stop:    docker compose -f deploy/docker-compose.prod.yml down
+# Logs:    docker compose -f deploy/docker-compose.prod.yml logs -f
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nova-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nova}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nova_postgres_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-nova_engine}
+    ports:
+      - "127.0.0.1:5432:5432"  # Only localhost — no public exposure
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nova} -d ${POSTGRES_DB:-nova_engine}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: nova-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-nova_redis_dev}"]
+    ports:
+      - "127.0.0.1:6379:6379"  # Only localhost
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-nova_redis_dev}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: nova-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio12345}
+    ports:
+      - "127.0.0.1:9000:9000"  # API — reverse proxy (nginx/traefik) if public needed
+      - "127.0.0.1:9001:9001"  # Console — restrict to admin only
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/docker/Nova.Api.Dockerfile
+    container_name: nova-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:5080
+      ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=${POSTGRES_DB:-nova_engine};Username=${POSTGRES_USER:-nova};Password=${POSTGRES_PASSWORD:-nova_postgres_dev}
+      ConnectionStrings__Redis: redis:6379,password=${REDIS_PASSWORD:-nova_redis_dev}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY}
+      Jwt__Issuer: NovaEngine
+      Jwt__Audience: NovaEditor
+      MinIO__Endpoint: minio:9000
+      MinIO__AccessKey: ${MINIO_ROOT_USER:-minioadmin}
+      MinIO__SecretKey: ${MINIO_ROOT_PASSWORD:-minio12345}
+      MinIO__Bucket: nova-assets
+      MinIO__Secure: "false"
+      Cors__AllowedOrigins__0: ${CORS_ORIGIN:-http://localhost:5173}
+      Seed__CreateAdmin: "true"
+      Seed__AdminEmail: ${ADMIN_EMAIL:-admin@nova.local}
+      Seed__AdminPassword: ${ADMIN_PASSWORD:-Admin#123}
+    ports:
+      - "127.0.0.1:5080:5080"  # Behind reverse proxy
+    volumes:
+      - api-uploads:/app/uploads
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nova-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:80:80"  # Expose nginx on port 80 — behind reverse proxy
+    environment:
+      API_URL: http://api:5080
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  minio-data:
+    driver: local
+  api-uploads:
+    driver: local

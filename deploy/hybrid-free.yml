@@ -1,0 +1,60 @@
+# Nova Engine — Hybrid Free-Tier Deployment
+#
+# Combines multiple free services for a fully functional stack:
+#
+#   PostgreSQL:  Neon (https://neon.tech)   — 0.5GB free, always-on, no sleep
+#   API:         Render Web Service           — free, sleeps after 15min inactivity
+#   Frontend:    Vercel / Render Static Site  — free, always-on
+#   Assets:      Backblaze B2                 — 10GB free, S3-compatible (replaces MinIO)
+#   Cache:       Upstash Redis                — 10MB free, serverless
+#   CI/CD:       GitHub Actions               — free
+#
+# ─── Setup Instructions ───────────────────────────────────────────────
+
+# 1. ── Neon PostgreSQL ────────────────────────────────────────────
+#    Go to https://neon.tech → Sign up → Create project
+#    Copy the connection string:
+#    postgresql://user:pass@ep-xxxx.us-east-2.aws.neon.tech/nova_engine?sslmode=require
+#
+# 2. ── Backblaze B2 (S3 for assets, replaces MinIO) ──────────────
+#    Go to https://backblaze.com → Sign up → Create B2 bucket "nova-assets"
+#    Create Application Key → copy KeyID + ApplicationKey
+#    Endpoint: https://s3.us-west-004.backblazeb2.com
+#
+# 3. ── Upstash Redis (optional cache) ──────────────────────────
+#    Go to https://console.upstash.com → Create Redis DB (free 10MB)
+#    Copy REST URL and password
+#
+# 4. ── Render API (ASP.NET Core) ───────────────────────────────
+#    New Web Service → Docker → Use the Dockerfile below
+#    OR use the render.yaml in deploy/render/
+#
+# 5. ── Vercel / Render Frontend ────────────────────────────────
+#    New Static Site → Root: frontend → Build: npm run build → Publish: dist
+#    Set env: VITE_API_URL = https://your-api.onrender.com
+
+# ─── Environment Variable Reference ───────────────────────────────────
+
+services:
+  # This config file is for reference only.
+  # Each service is managed through its respective dashboard.
+
+  api:
+    # Render Web Service (Docker)
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:5080
+      ConnectionStrings__Postgres: "postgresql://user:pass@ep-xxxx.neon.tech/nova_engine?sslmode=require"
+      ConnectionStrings__Redis: ""  # Optional — remove if no Redis
+      Jwt__SigningKey: "<generate-a-random-64-char-string>"
+      Jwt__Issuer: NovaEngine
+      Jwt__Audience: NovaEditor
+      MinIO__Endpoint: s3.us-west-004.backblazeb2.com
+      MinIO__AccessKey: "<your-b2-key-id>"
+      MinIO__SecretKey: "<your-b2-application-key>"
+      MinIO__Bucket: nova-assets
+      MinIO__Secure: "true"
+      Cors__AllowedOrigins__0: "https://your-frontend.vercel.app"
+      Seed__CreateAdmin: "true"
+      Seed__AdminEmail: admin@nova.local
+      Seed__AdminPassword: "<generate-a-password>"

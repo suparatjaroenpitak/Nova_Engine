@@ -1,0 +1,96 @@
+# Nova Engine — Render Blueprint (Free Tier)
+# Deploy: https://render.com/docs/infrastructure-as-code
+#
+# Components:
+#  1. PostgreSQL database (free, 1GB)
+#  2. .NET API Web Service (free, sleeps after inactivity)
+#  3. React Static Site (free, always on)
+#
+# Steps:
+#  1. Push repo to GitHub
+#  2. Go to https://dashboard.render.com/blueprints
+#  3. Connect repo, select this file → "Apply Blueprint"
+#
+# ─── OR create each service manually ───
+#  API:   New Web Service → select repo → Runtime: Docker → start command: (leave blank)
+#  Web:   New Static Site  → select repo → Root: frontend → Build: npm run build → Publish: dist
+#  DB:    New PostgreSQL
+# ────────────────────────────────────────
+
+services:
+  # ── ASP.NET Core API ──────────────────────────────────────
+  - type: web
+    name: nova-api
+    env: docker
+    repo: https://github.com/YOUR_USER/nova-engine
+    branch: main
+    dockerfilePath: backend/docker/Nova.Api.Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/auth/me
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:5080
+      - key: ConnectionStrings__Postgres
+        fromDatabase:
+          name: nova-db
+          property: connectionString
+      - key: ConnectionStrings__Redis
+        value: redis://REDIS_PUBLIC_URL:6379   # Optional — remove if no Redis
+      - key: Jwt__SigningKey
+        generateValue: true
+      - key: Jwt__Issuer
+        value: NovaEngine
+      - key: Jwt__Audience
+        value: NovaEditor
+      - key: MinIO__Endpoint
+        value: s3.amazonaws.com                 # Or use Supabase Storage / Backblaze B2
+      - key: MinIO__AccessKey
+        sync: false
+      - key: MinIO__SecretKey
+        sync: false
+      - key: MinIO__Bucket
+        value: nova-assets
+      - key: MinIO__Secure
+        value: "true"
+      - key: Cors__AllowedOrigins__0
+        value: https://nova-engine.onrender.com  # Change to your frontend URL
+      - key: Seed__CreateAdmin
+        value: "true"
+      - key: Seed__AdminEmail
+        value: admin@nova.local
+      - key: Seed__AdminPassword
+        generateValue: true
+
+  # ── React Frontend ────────────────────────────────────────
+  - type: web
+    name: nova-web
+    env: static
+    repo: https://github.com/YOUR_USER/nova-engine
+    branch: main
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://nova-api.onrender.com/api/:splat
+      - type: rewrite
+        source: /hubs/*
+        destination: https://nova-api.onrender.com/hubs/:splat
+    envVars:
+      - key: VITE_API_URL
+        value: https://nova-api.onrender.com
+
+# ── PostgreSQL Database ─────────────────────────────────────
+databases:
+  - name: nova-db
+    databaseName: nova_engine
+    user: nova
+    plan: free
+    ipAllowList: []  # Allow all connections (API service will connect internally)

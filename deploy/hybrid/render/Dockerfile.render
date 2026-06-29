@@ -1,7 +1,11 @@
+# Nova Engine — Render-specific Dockerfile
+# Optimized for Render's free tier (512MB RAM, builds from this file)
+# Render detects this as "Docker" environment automatically
+
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Layer 1: Restore (cached unless csproj changes)
+# Cache NuGet packages
 COPY Directory.Build.props .
 COPY src/Nova.Domain/Nova.Domain.csproj src/Nova.Domain/
 COPY src/Nova.Application/Nova.Application.csproj src/Nova.Application/
@@ -9,7 +13,7 @@ COPY src/Nova.Infrastructure/Nova.Infrastructure.csproj src/Nova.Infrastructure/
 COPY src/Nova.Api/Nova.Api.csproj src/Nova.Api/
 RUN dotnet restore src/Nova.Api/Nova.Api.csproj
 
-# Layer 2: Build and publish
+# Build
 COPY . .
 RUN dotnet build src/Nova.Api/Nova.Api.csproj -c Release -o /app/build --no-restore
 RUN dotnet publish src/Nova.Api/Nova.Api.csproj -c Release -o /app/publish --no-build
@@ -18,11 +22,6 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 RUN apt-get update && apt-get install -y curl --no-install-recommends && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /app/publish .
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:5080/api/v1/auth/me || exit 1
-
 EXPOSE 5080
 ENV ASPNETCORE_URLS=http://+:5080
 ENTRYPOINT ["dotnet", "Nova.Api.dll"]
