@@ -1,3 +1,7 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://name-jc9v.onrender.com/api/$1" },
+    { "source": "/hubs/(.*)", "destination": "https://name-jc9v.onrender.com/hubs/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
