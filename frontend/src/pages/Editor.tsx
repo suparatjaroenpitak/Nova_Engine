@@ -33,9 +33,13 @@ import PhysicsDebugger from '@/components/panels/PhysicsDebugger';
 import { CommandPalette } from '@/components/shared/CommandPalette';
 import { ContextMenu } from '@/components/shared/ContextMenu';
 import { useKeyboardShortcuts, globalShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useExternalDrop } from '@/hooks/useExternalDrop';
 import ScriptEditor from '@/components/panels/ScriptEditor';
 import PackageManager from '@/components/windows/PackageManager';
 import SearchEverywhere from '@/components/panels/SearchEverywhere';
+import FileDropOverlay from '@/components/shared/FileDropOverlay';
+import ImportDialog from '@/components/shared/ImportDialog';
+import UploadProgress from '@/components/shared/UploadProgress';
 
 type PanelEntry = {
   id: string;
@@ -98,6 +102,8 @@ export default function Editor() {
 
   useKeyboardShortcuts();
 
+  // Global external drag & drop
+  const globalDropRef = useExternalDrop({ panelId: 'editor' });
   useEffect(() => {
     if (projectId) {
       selectProject(projectId);
@@ -141,7 +147,7 @@ export default function Editor() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#0a0a1a] overflow-hidden">
+    <div ref={globalDropRef as any} className="h-screen w-screen flex flex-col bg-[#0a0a1a] overflow-hidden">
       {/* Menu Bar */}
       <MenuBar />
 
@@ -378,6 +384,9 @@ export default function Editor() {
       {/* Global overlays */}
       {showCommandPalette && <CommandPalette />}
       {showContextMenu && <ContextMenu />}
+      <FileDropOverlay />
+      <ImportDialog />
+      <UploadProgress />
 
       {/* Mobile panel overlays */}
       {mobilePanel && (

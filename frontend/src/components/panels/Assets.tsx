@@ -1,6 +1,7 @@
 import { useRef, useCallback, useState, useMemo } from 'react';
 import { useAssetStore } from '@/stores/assetStore';
 import { useProjectStore } from '@/stores/projectStore';
+import DropZone from '@/components/shared/DropZone';
 import type { AssetDto } from '@/types';
 
 function FolderTree({
@@ -212,12 +213,11 @@ export default function Assets() {
   };
 
   return (
-    <div
-      className="h-full flex flex-col"
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={handleFileDrop}
-      onClick={() => setContextMenu(null)}
-    >
+    <DropZone panelId="assets" allowedCategories={['model', 'texture', 'material', 'audio', 'script', 'font', 'animation', 'scene', 'package']}>
+      <div
+        className="h-full flex flex-col"
+        onClick={() => setContextMenu(null)}
+      >
       {/* Toolbar */}
       <div className="flex items-center h-7 gap-2 px-2 border-b border-nova-border bg-nova-surface2/30 shrink-0">
         <button
@@ -333,6 +333,7 @@ export default function Assets() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </DropZone>
   );
 }
