@@ -109,7 +109,9 @@ export default function Login() {
       }
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err?.response?.data?.title || err?.response?.data || 'Authentication failed');
+      const data = err?.response?.data;
+      const msg = data?.error || data?.title || (typeof data === 'string' ? data : null) || err?.message || 'Authentication failed';
+      setError(msg);
       setShakeKey((k) => k + 1);
     } finally {
       setLoading(false);
