@@ -13,10 +13,9 @@ COPY backend/src/Nova.Infrastructure/Nova.Infrastructure.csproj backend/src/Nova
 COPY backend/src/Nova.Api/Nova.Api.csproj backend/src/Nova.Api/
 RUN dotnet restore backend/src/Nova.Api/Nova.Api.csproj
 
-# Build
+# Build and publish in one step
 COPY . .
-RUN dotnet build backend/src/Nova.Api/Nova.Api.csproj -c Release -o /app/build --no-restore
-RUN dotnet publish backend/src/Nova.Api/Nova.Api.csproj -c Release -o /app/publish --no-build
+RUN dotnet publish backend/src/Nova.Api/Nova.Api.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 RUN apt-get update && apt-get install -y curl --no-install-recommends && rm -rf /var/lib/apt/lists/*
