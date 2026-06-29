@@ -23,8 +23,9 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
         // EF Core + PostgreSQL
+        var connStr = SanitizeConnectionString(config.GetConnectionString("Postgres")!);
         services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(config.GetConnectionString("Postgres")!,
+            options.UseNpgsql(connStr,
                 npg => npg.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
 
         // Repositories
@@ -87,5 +88,15 @@ public static class DependencyInjection
         services.AddScoped<AssetImportJobHandler>();
 
         return services;
+    }
+
+    private static string SanitizeConnectionString(string connStr)
+    {
+        // Npgsql requires sslmode=require — fix common truncation issues with URL format
+        if (connStr.Contains("?sslmode") && !connStr.Contains("sslmode="))
+            connStr = connStr.Replace("?sslmode", "?sslmode=require");
+        if (connStr.EndsWith("?sslmode=require&"))
+            connStr = connStr.TrimEnd('&');
+        return connStr;
     }
 }
