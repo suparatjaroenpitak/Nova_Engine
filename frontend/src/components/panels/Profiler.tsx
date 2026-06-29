@@ -70,7 +70,7 @@ function ProfilerChart({ data, color, label, maxValue, unit }: {
     ctx.fill();
   }, [data, color, maxValue]);
 
-  const val = currentValue ? ('fps' in currentValue ? currentValue.fps : currentValue.cpu) : 0;
+  const val = currentValue ? ((currentValue as any).fps || (currentValue as any).cpu || 0) : 0;
 
   return (
     <div className="bg-[#0f0f25] border border-[#2a2a4a] rounded p-2">

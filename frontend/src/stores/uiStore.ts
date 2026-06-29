@@ -176,7 +176,7 @@ export const useUiStore = create<UiState>()(
         ambientIntensity: 0.4,
       },
 
-      profilerData: [],
+      profilerData: ([] as ProfilerSnapshot[]),
 
       viewMode: '3d',
       focusTarget: null,

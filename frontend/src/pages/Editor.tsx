@@ -4,6 +4,7 @@ import { useProjectStore } from '@/stores/projectStore';
 import { useAssetStore } from '@/stores/assetStore';
 import { useUiStore } from '@/stores/uiStore';
 import { useSceneStore } from '@/stores/sceneStore';
+import type { PanelId } from '@/types';
 import MenuBar from '@/components/layout/MenuBar';
 import Toolbar from '@/components/layout/Toolbar';
 import StatusBar from '@/components/layout/StatusBar';
@@ -238,7 +239,7 @@ export default function Editor() {
                     { id: 'ai', title: 'AI Assistant', icon: '🤖' },
                     { id: 'lighting', title: 'Lighting', icon: '☀' },
                     { id: 'versionControl', title: 'Version Control', icon: '⎇' },
-                  ].filter(({ id }) => panels[id]?.visible).map(({ id, title, icon }) => {
+                  ].filter(({ id }) => panels[id as PanelId]?.visible).map(({ id, title, icon }) => {
                     const isActive = id === 'assets' || id === 'console' || id === 'terminal';
                     return (
                       <button
@@ -418,7 +419,7 @@ function FloatingPanelOverlay() {
 
   return (
     <>
-      {floatingPanels.filter((p) => panels[p.id]?.visible).map((p) => (
+      {floatingPanels.filter((p) => panels[p.id as PanelId]?.visible).map((p) => (
         <div
           key={p.id}
           className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm"
