@@ -43,7 +43,7 @@ public sealed class TokenService : ITokenService
         return (accessToken, new RefreshTokenIssue(token, expiresAt));
     }
 
-    public async Task<(string accessToken, RefreshTokenIssue refreshToken)?> RefreshAsync(string refreshToken, CancellationToken ct = default)
+    public async Task<(string accessToken, RefreshTokenIssue refreshToken, Guid userId)?> RefreshAsync(string refreshToken, CancellationToken ct = default)
     {
         var tokenHash = HashRefreshToken(refreshToken);
         var stored = await _db.RefreshTokens
@@ -69,7 +69,7 @@ public sealed class TokenService : ITokenService
         });
         await _db.SaveChangesAsync(ct);
 
-        return (newAccessToken, new RefreshTokenIssue(newToken, expiresAt));
+        return (newAccessToken, new RefreshTokenIssue(newToken, expiresAt), stored.UserId);
     }
 
     public async Task RevokeAsync(string refreshToken, CancellationToken ct = default)

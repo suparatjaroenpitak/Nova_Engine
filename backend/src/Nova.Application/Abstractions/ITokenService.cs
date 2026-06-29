@@ -9,7 +9,7 @@ namespace Nova.Application.Abstractions;
 public interface ITokenService
 {
     Task<(string accessToken, RefreshTokenIssue refreshToken)> IssueAsync(User user, CancellationToken ct = default);
-    Task<(string accessToken, RefreshTokenIssue refreshToken)?> RefreshAsync(string refreshToken, CancellationToken ct = default);
+    Task<(string accessToken, RefreshTokenIssue refreshToken, Guid userId)?> RefreshAsync(string refreshToken, CancellationToken ct = default);
     Task RevokeAsync(string refreshToken, CancellationToken ct = default);
 }
 

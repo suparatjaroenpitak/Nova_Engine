@@ -64,7 +64,7 @@ public sealed class AuthController : ControllerBase
         if (result is null)
             return Unauthorized(new { error = "Invalid or expired refresh token" });
 
-        var user = await _users.GetByEmailAsync(User.Identity?.Name ?? string.Empty, ct);
+        var user = await _users.GetAsync(result.Value.userId, ct);
         return Ok(new AuthResponse(result.Value.accessToken, result.Value.refreshToken.Token, user is not null ? MapUser(user) : null!));
     }
 
