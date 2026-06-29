@@ -90,44 +90,57 @@ public static class DependencyInjection
         return services;
     }
 
+    private static readonly HashSet<string> NpgsqlParams = [.. new[]
+    {
+        "Host", "Port", "Database", "Username", "Password", "ApplicationName",
+        "sslmode", "SslMode", "SSL Mode", "TrustServerCertificate",
+        "Pooling", "MinPoolSize", "MaxPoolSize", "ConnectionLifetime",
+        "Timeout", "CommandTimeout", "IncludeErrorDetail",
+        "SearchPath", "Timezone", "Encoding",
+        "KeepAlive", "TCP Keepalive Time", "TCP Keepalive Interval",
+        "ReadOnly", "UseSslStream"
+    }];
+
     private static string SanitizeConnectionString(string connStr)
     {
-        // Convert URL format (postgresql://user:pass@host/db?sslmode=require)
-        // to key=value format (Host=...;Database=...;Username=...) for Npgsql
-        if (connStr.StartsWith("postgresql://") || connStr.StartsWith("postgres://"))
+        if (!connStr.StartsWith("postgresql://") && !connStr.StartsWith("postgres://"))
+            return connStr;
+
+        try
         {
-            try
+            var uri = new Uri(connStr);
+            var parts = new List<string>
             {
-                var uri = new Uri(connStr);
-                var parts = new List<string>();
-                parts.Add($"Host={uri.Host}");
-                if (uri.Port > 0) parts.Add($"Port={uri.Port}");
-                parts.Add($"Database={uri.AbsolutePath.TrimStart('/')}");
-                if (!string.IsNullOrEmpty(uri.UserInfo))
-                {
-                    var ui = uri.UserInfo.Split(':');
-                    parts.Add($"Username={ui[0]}");
-                    if (ui.Length > 1) parts.Add($"Password={ui[1]}");
-                }
-                var query = uri.Query.TrimStart('?');
-                if (!string.IsNullOrEmpty(query))
-                {
-                    foreach (var pair in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
-                    {
-                        var kv = pair.Split('=', 2);
-                        if (kv.Length == 2)
-                            parts.Add($"{kv[0]}={kv[1]}");
-                    }
-                }
-                if (!parts.Any(p => p.StartsWith("sslmode", StringComparison.OrdinalIgnoreCase)))
-                    parts.Add("sslmode=require");
-                return string.Join(';', parts);
-            }
-            catch
+                $"Host={uri.Host}"
+            };
+            if (uri.Port > 0) parts.Add($"Port={uri.Port}");
+            parts.Add($"Database={uri.AbsolutePath.TrimStart('/')}");
+            if (!string.IsNullOrEmpty(uri.UserInfo))
             {
-                // fallback to original if parsing fails
+                var ui = uri.UserInfo.Split(':');
+                parts.Add($"Username={ui[0]}");
+                if (ui.Length > 1) parts.Add($"Password={ui[1]}");
             }
+
+            var query = uri.Query.TrimStart('?');
+            if (!string.IsNullOrEmpty(query))
+            {
+                foreach (var pair in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var kv = pair.Split('=', 2);
+                    if (kv.Length == 2 && NpgsqlParams.Contains(kv[0], StringComparer.OrdinalIgnoreCase))
+                        parts.Add($"{kv[0]}={kv[1]}");
+                }
+            }
+
+            if (!parts.Any(p => p.StartsWith("sslmode", StringComparison.OrdinalIgnoreCase)))
+                parts.Add("sslmode=require");
+
+            return string.Join(';', parts);
         }
-        return connStr;
+        catch
+        {
+            return connStr;
+        }
     }
 }
