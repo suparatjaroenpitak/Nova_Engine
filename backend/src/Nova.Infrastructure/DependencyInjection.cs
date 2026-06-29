@@ -80,8 +80,8 @@ public static class DependencyInjection
         // Export
         services.AddScoped<IExporter, LocalWebExporter>();
 
-        // Hangfire
-        services.AddHangfire(h => h.UsePostgreSqlStorage(config.GetConnectionString("Postgres")));
+        // Hangfire (InMemory for Render compatibility — swap to PostgreSQL for production VPS)
+        services.AddHangfire(h => h.UseInMemoryStorage());
         services.AddHangfireServer();
 
         // Background job handlers
