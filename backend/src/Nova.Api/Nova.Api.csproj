@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>Nova.Api</RootNamespace>
-    <!-- Generate the XML doc that Swashbuckle reads for API descriptions. -->
+    <!-- Generate XML docs for OpenAPI/Scalar descriptions. -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
@@ -14,8 +14,7 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Common" Version="10.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.0" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.0.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.7.3" />
+
   </ItemGroup>
 
   <ItemGroup>
