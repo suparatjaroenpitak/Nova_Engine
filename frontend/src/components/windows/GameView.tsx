@@ -1,99 +1,94 @@
-import { Suspense, useRef } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
-import { useUiStore } from '@/stores/uiStore';
-import { useSceneStore } from '@/stores/sceneStore';
-import * as THREE from 'three';
-
-function GameScene() {
-  const { gameObjects } = useSceneStore();
-  const { camera } = useThree();
-
-  return (
-    <>
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[10, 10, 5]} intensity={1} />
-      {gameObjects.map((go) => {
-        const t = go.transform;
-        return (
-          <mesh key={go.id} position={[t.px, t.py, t.pz]}>
-            <boxGeometry args={[1, 1, 1]} />
-            <meshStandardMaterial color="#4a4a7a" />
-          </mesh>
-        );
-      })}
-    </>
-  );
-}
+import { useEffect, useRef, useCallback, useState } from 'react';
+import { Engine } from '@babylonjs/core/Engines/engine';
+import { Scene } from '@babylonjs/core/scene';
+import { FreeCamera } from '@babylonjs/core/Cameras/freeCamera';
+import { Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { Color4 } from '@babylonjs/core/Maths/math.color';
+import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
+import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
+import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
+import { DirectionalLight } from '@babylonjs/core/Lights/directionalLight';
+import '@babylonjs/core/Loading/loadingScreen';
 
 export default function GameView() {
-  const { isPlaying, isPaused, startPlaying, stopPlaying, pausePlaying } = useUiStore();
-  const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [fps, setFps] = useState(0);
+
+  const init = useCallback((canvas: HTMLCanvasElement) => {
+    const engine = new Engine(canvas, true, { preserveDrawingBuffer: false }, true);
+    const scene = new Scene(engine);
+    scene.clearColor = new Color4(0.1, 0.1, 0.2, 1);
+
+    const camera = new FreeCamera('gameCam', new Vector3(0, 2, -5), scene);
+    camera.setTarget(Vector3.Zero());
+    camera.attachControl(canvas, false);
+
+    new HemisphericLight('hemi', new Vector3(0, 1, 0), scene);
+    const dir = new DirectionalLight('dir', new Vector3(-1, -2, -1), scene);
+    dir.intensity = 0.8;
+
+    const box = MeshBuilder.CreateBox('player', { size: 0.8 }, scene);
+    box.position.y = 0.5;
+    const mat = new StandardMaterial('playerMat', scene);
+    mat.diffuseColor.set(0.8, 0.3, 0.4);
+    box.material = mat;
+
+    const plane = MeshBuilder.CreateGround('ground', { width: 20, height: 20 }, scene);
+    const groundMat = new StandardMaterial('groundMat', scene);
+    groundMat.diffuseColor.set(0.2, 0.2, 0.25);
+    plane.material = groundMat;
+
+    engine.runRenderLoop(() => {
+      scene.render();
+      setFps(Math.round(engine.getFps()));
+    });
+
+    const ro = new ResizeObserver(() => engine.resize());
+    if (canvas.parentElement) ro.observe(canvas.parentElement);
+
+    return () => {
+      ro.disconnect();
+      engine.stopRenderLoop();
+      scene.dispose();
+      engine.dispose();
+    };
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const cleanup = init(canvas);
+    return () => cleanup?.();
+  }, []);
 
   return (
-    <div className="h-full w-full flex flex-col bg-[#0a0a1a]">
-      {/* Toolbar */}
-      <div className="flex items-center h-8 px-2 bg-[#12122a] border-b border-[#2a2a4a] gap-1 shrink-0">
+    <div className="h-full flex flex-col bg-[#0a0a15]">
+      <div className="flex items-center gap-1 px-2 h-8 bg-[#1a1a30] border-b border-[#2a2a4a] shrink-0">
         <button
-          onClick={startPlaying}
-          className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-            isPlaying && !isPaused
-              ? 'bg-green-500 text-white'
-              : 'bg-[#1a1a35] text-[#6a6a8a] hover:text-white border border-[#2a2a4a]'
-          }`}
+          onClick={() => { setPlaying(!playing); setPaused(false); }}
+          className={`px-3 py-0.5 rounded text-xs ${playing ? 'bg-green-600' : 'bg-[#2a2a4a]'} text-white hover:opacity-80`}
         >
-          ▶ Play
+          {playing ? '⏹ Stop' : '▶ Play'}
         </button>
         <button
-          onClick={pausePlaying}
-          disabled={!isPlaying}
-          className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-            isPaused
-              ? 'bg-yellow-500 text-white'
-              : 'bg-[#1a1a35] text-[#6a6a8a] hover:text-white border border-[#2a2a4a] disabled:opacity-50'
-          }`}
+          disabled={!playing}
+          onClick={() => setPaused(!paused)}
+          className={`px-3 py-0.5 rounded text-xs ${paused ? 'bg-yellow-600' : 'bg-[#2a2a4a]'} text-white hover:opacity-80 disabled:opacity-40`}
         >
-          ⏸ Pause
+          {paused ? '▶ Resume' : '⏸ Pause'}
         </button>
-        <button
-          onClick={stopPlaying}
-          disabled={!isPlaying}
-          className="px-3 py-1 rounded text-xs font-medium bg-[#1a1a35] text-[#6a6a8a] hover:text-white border border-[#2a2a4a] disabled:opacity-50"
-        >
-          ⏹ Stop
-        </button>
-
         <div className="flex-1" />
-
-        {isPlaying && (
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-[10px] text-green-400 font-medium">Playing</span>
-          </div>
-        )}
-
-        <div className="text-[10px] text-[#6a6a8a] px-2">
-          {isPaused ? 'PAUSED' : isPlaying ? `${60} FPS` : 'Stopped'}
-        </div>
+        <span className="text-[10px] text-[#6a6a8a] font-mono">
+          {fps} FPS
+        </span>
+        <span className="text-[10px] text-[#6a6a8a] ml-2">
+          {playing ? '🟢 Playing' : paused ? '🟡 Paused' : '⏹ Stopped'}
+        </span>
       </div>
-
-      {/* Viewport */}
-      <div ref={containerRef} className="flex-1 relative">
-        <Canvas
-          camera={{ position: [6, 5, 6], fov: 60 }}
-          className="bg-[#0a0a1a]"
-          gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
-        >
-          <Suspense fallback={null}>
-            <GameScene />
-            <OrbitControls makeDefault />
-          </Suspense>
-        </Canvas>
-
-        {/* Resolution overlay */}
-        <div className="absolute top-2 right-2 text-[10px] text-[#6a6a8a] bg-[#12122a]/60 backdrop-blur px-2 py-0.5 rounded border border-[#2a2a4a]">
-          Game | 1920x1080
-        </div>
+      <div className="flex-1 relative">
+        <canvas ref={canvasRef} className="w-full h-full block outline-none touch-none" />
       </div>
     </div>
   );
