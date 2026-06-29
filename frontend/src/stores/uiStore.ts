@@ -15,6 +15,7 @@ interface UiState {
   gizmoMode: 'translate' | 'rotate' | 'scale';
   gizmoSpace: 'world' | 'local';
   snapping: boolean;
+  snapSize: number;
   gridVisible: boolean;
 
   togglePanel: (id: PanelId) => void;
@@ -30,6 +31,7 @@ interface UiState {
   setGizmoMode: (mode: 'translate' | 'rotate' | 'scale') => void;
   toggleGizmoSpace: () => void;
   toggleSnapping: () => void;
+  setSnapSize: (size: number) => void;
   toggleGrid: () => void;
 }
 
@@ -58,6 +60,7 @@ export const useUiStore = create<UiState>()(
       gizmoMode: 'translate',
       gizmoSpace: 'world',
       snapping: false,
+      snapSize: 0.5,
       gridVisible: true,
 
       togglePanel: (id) =>
@@ -97,6 +100,7 @@ export const useUiStore = create<UiState>()(
       setGizmoMode: (mode) => set({ gizmoMode: mode }),
       toggleGizmoSpace: () => set((s) => ({ gizmoSpace: s.gizmoSpace === 'world' ? 'local' : 'world' })),
       toggleSnapping: () => set((s) => ({ snapping: !s.snapping })),
+      setSnapSize: (size) => set({ snapSize: size }),
       toggleGrid: () => set((s) => ({ gridVisible: !s.gridVisible })),
     }),
     { name: 'nova-ui', partialize: (s) => ({ panels: s.panels, gizmoMode: s.gizmoMode }) }
