@@ -62,13 +62,23 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// CORS
+// CORS — support config, env var override, and dynamic Vercel preview domains
 var corsSection = builder.Configuration.GetSection(CorsOptions.Section);
-var allowedOrigins = corsSection.Get<CorsOptions>()?.AllowedOrigins ?? ["http://localhost:5173"];
+var configOrigins = corsSection.Get<CorsOptions>()?.AllowedOrigins ?? [];
+var envOrigins = (builder.Configuration["ALLOWED_ORIGINS"] ?? "")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+var explicitOrigins = envOrigins.Length > 0 ? envOrigins
+    : configOrigins.Length > 0 ? configOrigins
+    : ["http://localhost:5173", "http://localhost:4173", "https://nova-engine.vercel.app"];
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
-        policy.WithOrigins(allowedOrigins)
+        policy.SetIsOriginAllowed(origin =>
+            explicitOrigins.Contains(origin) ||
+            origin.EndsWith(".vercel.app") ||
+            origin.EndsWith(".onrender.com") ||
+            origin == "https://nova-engine.vercel.app")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials());
