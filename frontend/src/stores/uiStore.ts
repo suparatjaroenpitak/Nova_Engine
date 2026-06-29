@@ -49,6 +49,8 @@ export const useUiStore = create<UiState>()(
         profiler: { visible: false, order: 6 },
         animation: { visible: false, order: 7 },
         timeline: { visible: false, order: 8 },
+        ai: { visible: false, order: 9 },
+        lighting: { visible: false, order: 10 },
       },
       console: [],
       tabs: [],

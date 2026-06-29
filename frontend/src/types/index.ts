@@ -155,7 +155,7 @@ export interface ConsoleEntry {
   timestamp: Date;
 }
 
-export type PanelId = 'hierarchy' | 'inspector' | 'scene' | 'game' | 'assets' | 'console' | 'profiler' | 'animation' | 'timeline';
+export type PanelId = 'hierarchy' | 'inspector' | 'scene' | 'game' | 'assets' | 'console' | 'profiler' | 'animation' | 'timeline' | 'ai' | 'lighting';
 
 export interface PanelState {
   id: PanelId;

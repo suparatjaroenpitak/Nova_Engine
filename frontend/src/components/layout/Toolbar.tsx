@@ -88,7 +88,7 @@ export default function Toolbar() {
         <div className="flex-1" />
 
         {/* Panel toggles */}
-        {(['hierarchy', 'inspector', 'assets', 'console', 'animation', 'timeline'] as const).map((p) => (
+        {(['hierarchy', 'inspector', 'assets', 'console', 'animation', 'timeline', 'ai', 'lighting'] as const).map((p) => (
           <button
             key={p}
             onClick={() => togglePanel(p)}
@@ -127,13 +127,13 @@ export default function Toolbar() {
                 Grid: {gridVisible ? 'ON' : 'OFF'}
               </button>
               <div className="h-px bg-nova-border my-2" />
-              {(['hierarchy', 'inspector', 'assets', 'console'] as const).map((p) => (
+              {(['hierarchy', 'inspector', 'assets', 'console', 'ai', 'lighting'] as const).map((p) => (
                 <button
                   key={p}
                   onClick={() => { togglePanel(p); setMobileMenu(false); }}
                   className={`w-full text-left px-3 py-2 rounded text-xs ${panels[p].visible ? 'text-nova-accent' : 'text-nova-muted'} hover:bg-nova-hover`}
                 >
-                  {p.charAt(0).toUpperCase() + p.slice(1)}: {panels[p].visible ? 'ON' : 'OFF'}
+                  {p === 'ai' ? 'AI Assistant' : p.charAt(0).toUpperCase() + p.slice(1)}: {panels[p].visible ? 'ON' : 'OFF'}
                 </button>
               ))}
             </div>

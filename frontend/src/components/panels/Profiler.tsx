@@ -1,70 +1,118 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
+
+type FrameSample = { time: number; fps: number; frameTime: number };
 
 export default function Profiler() {
-  const [fps, setFps] = useState(60);
-  const [frameTime, setFrameTime] = useState(16);
-  const [drawCalls, setDrawCalls] = useState(0);
-  const [triangles, setTriangles] = useState(0);
+  const [samples, setSamples] = useState<FrameSample[]>([]);
+  const [peakFps, setPeakFps] = useState(0);
+  const [lowFps, setLowFps] = useState(Infinity);
+  const frameRef = useRef(0);
+  const lastTimeRef = useRef(performance.now());
+  const rafRef = useRef<number>(0);
 
   useEffect(() => {
-    let lastTime = performance.now();
-    let frames = 0;
+    const record = (now: number) => {
+      const delta = now - lastTimeRef.current;
+      lastTimeRef.current = now;
+      const fps = delta > 0 ? Math.round(1000 / delta) : 0;
 
-    const tick = () => {
-      frames++;
-      const now = performance.now();
-      if (now - lastTime >= 1000) {
-        setFps(frames);
-        setFrameTime(Math.round(1000 / frames));
-        frames = 0;
-        lastTime = now;
-      }
-      requestAnimationFrame(tick);
+      setSamples((prev) => {
+        const next = [...prev, { time: now, fps, frameTime: delta }];
+        if (next.length > 120) next.shift();
+        return next;
+      });
+      setPeakFps((prev) => Math.max(prev, fps));
+      setLowFps((prev) => Math.min(prev, fps > 0 ? fps : prev));
+
+      frameRef.current++;
+      rafRef.current = requestAnimationFrame(record);
     };
 
-    const id = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(id);
+    rafRef.current = requestAnimationFrame(record);
+    return () => cancelAnimationFrame(rafRef.current);
   }, []);
 
+  const currentFps = samples.length > 0 ? samples[samples.length - 1].fps : 0;
+  const avgFps = samples.length > 0 ? Math.round(samples.reduce((a, s) => a + s.fps, 0) / samples.length) : 0;
+  const avgFrameTime = samples.length > 0 ? (samples.reduce((a, s) => a + s.frameTime, 0) / samples.length).toFixed(1) : '0';
+  const fpsColor = currentFps >= 55 ? 'text-nova-success' : currentFps >= 30 ? 'text-nova-warning' : 'text-nova-error';
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || samples.length < 2) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const maxFps = Math.max(60, ...samples.map((s) => s.fps));
+    const stepX = w / Math.max(samples.length - 1, 1);
+
+    ctx.beginPath();
+    samples.forEach((s, i) => {
+      const x = i * stepX;
+      const y = h - (s.fps / maxFps) * (h - 4) - 2;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = '#e94560';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.beginPath();
+    samples.forEach((s, i) => {
+      const x = i * stepX;
+      const y = h - (s.fps / maxFps) * (h - 4) - 2;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, 'rgba(233, 69, 96, 0.2)');
+    grad.addColorStop(1, 'rgba(233, 69, 96, 0)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+  }, [samples]);
+
   const metrics = [
-    { label: 'FPS', value: fps, max: 60, color: fps >= 55 ? 'bg-green-500' : fps >= 30 ? 'bg-yellow-500' : 'bg-red-500' },
-    { label: 'Frame Time', value: `${frameTime}ms`, color: 'bg-blue-500' },
-    { label: 'Draw Calls', value: drawCalls, color: 'bg-purple-500' },
-    { label: 'Triangles', value: triangles.toLocaleString(), color: 'bg-orange-500' },
+    { label: 'FPS', value: currentFps.toString(), color: fpsColor },
+    { label: 'Avg FPS', value: avgFps.toString(), color: 'text-nova-text' },
+    { label: 'Frame Time', value: `${avgFrameTime}ms`, color: 'text-nova-text' },
+    { label: 'Peak FPS', value: peakFps.toString(), color: 'text-nova-success' },
+    { label: 'Low FPS', value: lowFps === Infinity ? '-' : lowFps.toString(), color: 'text-nova-warning' },
+    { label: 'Draw Calls', value: '0', color: 'text-nova-muted' },
+    { label: 'Triangles', value: '0', color: 'text-nova-muted' },
+    { label: 'Memory', value: `${(performance as any).memory?.usedJSHeapSize ? Math.round((performance as any).memory.usedJSHeapSize / 1048576) : '-'} MB`, color: 'text-nova-muted' },
   ];
 
   return (
-    <div className="h-full overflow-y-auto p-3">
-      <div className="grid grid-cols-2 gap-2">
-        {metrics.map((m) => (
-          <div key={m.label} className="bg-nova-bg/50 border border-nova-border rounded p-2">
-            <div className="text-xs text-nova-muted mb-1">{m.label}</div>
-            <div className="text-lg font-bold text-white">{m.value}</div>
-          </div>
-        ))}
+    <div className="h-full flex flex-col">
+      <div className="flex items-center h-7 px-2 bg-nova-surface2/50 border-b border-nova-border shrink-0">
+        <span className="text-xs font-medium text-nova-muted uppercase tracking-wider">Profiler</span>
+        <span className={`ml-2 text-xs font-mono font-bold ${fpsColor}`}>{currentFps} FPS</span>
       </div>
-
-      <div className="mt-4">
-        <h3 className="text-xs font-medium text-nova-muted mb-2">Memory</h3>
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs text-nova-text">
-            <span>System Memory</span>
-            <span>-- MB</span>
-          </div>
-          <div className="flex justify-between text-xs text-nova-text">
-            <span>GPU Memory</span>
-            <span>-- MB</span>
-          </div>
+      <div className="flex-1 flex overflow-hidden">
+        {/* Chart */}
+        <div className="flex-1 p-2">
+          <canvas
+            ref={canvasRef}
+            width={400}
+            height={120}
+            className="w-full h-full rounded border border-nova-border bg-nova-bg/50"
+          />
         </div>
-      </div>
-
-      <div className="mt-4">
-        <h3 className="text-xs font-medium text-nova-muted mb-2">Audio</h3>
-        <div className="text-xs text-nova-text">
-          <div className="flex justify-between py-1">
-            <span>Playing</span>
-            <span>0</span>
-          </div>
+        {/* Metrics */}
+        <div className="w-48 p-2 border-l border-nova-border overflow-y-auto">
+          {metrics.map((m) => (
+            <div key={m.label} className="flex items-center justify-between py-1">
+              <span className="text-xs text-nova-muted">{m.label}</span>
+              <span className={`text-xs font-mono font-medium ${m.color}`}>{m.value}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

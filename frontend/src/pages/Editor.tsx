@@ -18,6 +18,8 @@ import ScriptEditor from '@/components/panels/ScriptEditor';
 import ShaderEditor from '@/components/panels/ShaderEditor';
 import MaterialEditor from '@/components/panels/MaterialEditor';
 import TerrainEditor from '@/components/panels/TerrainEditor';
+import AIAssistant from '@/components/panels/AIAssistant';
+import Lighting from '@/components/panels/Lighting';
 import { CommandPalette } from '@/components/shared/CommandPalette';
 import { ContextMenu } from '@/components/shared/ContextMenu';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -165,11 +167,27 @@ export default function Editor() {
               </div>
             </div>
           )}
-          {panels.profiler.visible && !panels.animation.visible && !panels.timeline.visible && (
+          {panels.profiler.visible && !panels.animation.visible && !panels.timeline.visible && !panels.ai.visible && !panels.lighting.visible && (
             <div className="hidden md:flex h-[180px] lg:h-[200px] min-h-[80px] flex-col bg-nova-surface border-t border-nova-border resize-y overflow-hidden">
               <PanelHeader title="Profiler" onToggle={() => togglePanel('profiler')} />
               <div className="flex-1 overflow-hidden">
                 <Profiler />
+              </div>
+            </div>
+          )}
+          {panels.ai.visible && (
+            <div className="hidden md:flex h-[220px] lg:h-[260px] min-h-[120px] flex-col bg-nova-surface border-t border-nova-border resize-y overflow-hidden">
+              <PanelHeader title="AI Assistant" onToggle={() => togglePanel('ai')} />
+              <div className="flex-1 overflow-hidden">
+                <AIAssistant />
+              </div>
+            </div>
+          )}
+          {panels.lighting.visible && !panels.ai.visible && (
+            <div className="hidden md:flex h-[220px] lg:h-[260px] min-h-[120px] flex-col bg-nova-surface border-t border-nova-border resize-y overflow-hidden">
+              <PanelHeader title="Lighting" onToggle={() => togglePanel('lighting')} />
+              <div className="flex-1 overflow-hidden">
+                <Lighting />
               </div>
             </div>
           )}
