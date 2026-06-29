@@ -67,6 +67,7 @@ const DEFAULT_LAYOUT: LayoutConfig = {
     physicsDebugger: { id: 'physicsDebugger', visible: false, order: 27 },
     searchEverywhere: { id: 'searchEverywhere', visible: false, order: 28 },
     gameView: { id: 'gameView', visible: false, order: 29 },
+    aiGeneration: { id: 'aiGeneration', visible: false, order: 30 },
   },
   zones: [
     {

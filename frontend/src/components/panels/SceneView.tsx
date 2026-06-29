@@ -139,7 +139,7 @@ export default function SceneView({ onSelectObject, showMiniViewport = false }: 
     const toRemove = new Set(meshMapRef.current.keys());
     for (const go of gameObjects) {
       toRemove.delete(go.id);
-      let mesh = meshMapRef.current.get(go.id);
+      let mesh: Mesh | null = meshMapRef.current.get(go.id) ?? null;
       if (!mesh) {
         const kind = resolveKind(go.components);
         const creator = MESH_CREATORS[kind] || MESH_CREATORS.box;
