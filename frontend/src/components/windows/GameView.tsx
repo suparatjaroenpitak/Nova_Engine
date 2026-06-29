@@ -1,114 +1,100 @@
-import { Suspense, useRef, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Suspense, useRef } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
+import { useUiStore } from '@/stores/uiStore';
 import { useSceneStore } from '@/stores/sceneStore';
 import * as THREE from 'three';
 
-function GameLighting() {
-  return (
-    <>
-      <ambientLight intensity={0.4} />
-      <directionalLight position={[10, 10, 5]} intensity={1.5} castShadow shadow-mapSize={[1024, 1024]} />
-      <directionalLight position={[-10, -5, -5]} intensity={0.3} />
-      <hemisphereLight args={['#87ceeb', '#333', 0.3]} />
-    </>
-  );
-}
-
-function GameObjects() {
-  const gameObjects = useSceneStore((s) => s.gameObjects);
-
-  if (gameObjects.length === 0) {
-    return (
-      <mesh>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color="#e94560" roughness={0.4} metalness={0.6} />
-      </mesh>
-    );
-  }
+function GameScene() {
+  const { gameObjects } = useSceneStore();
+  const { camera } = useThree();
 
   return (
     <>
-      {gameObjects.map((go) => (
-        <mesh
-          key={go.id}
-          position={[go.transform.px, go.transform.py, go.transform.pz]}
-          castShadow
-          receiveShadow
-        >
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color="#4a4a7a" roughness={0.5} metalness={0.3} />
-        </mesh>
-      ))}
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[10, 10, 5]} intensity={1} />
+      {gameObjects.map((go) => {
+        const t = go.transform;
+        return (
+          <mesh key={go.id} position={[t.px, t.py, t.pz]}>
+            <boxGeometry args={[1, 1, 1]} />
+            <meshStandardMaterial color="#4a4a7a" />
+          </mesh>
+        );
+      })}
     </>
   );
 }
 
 export default function GameView() {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+  const { isPlaying, isPaused, startPlaying, stopPlaying, pausePlaying } = useUiStore();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="h-full w-full relative">
-      <Canvas
-        shadows
-        camera={{ position: [0, 2, 5], fov: 60 }}
-        className="bg-black"
-        gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
-      >
-        <Suspense fallback={null}>
-          <GameLighting />
-          <GameObjects />
-          <OrbitControls />
-        </Suspense>
-        <fog attach="fog" args={['#0a0a1a', 20, 50]} />
-      </Canvas>
-
-      {/* Playback controls */}
-      <div className="absolute top-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+    <div className="h-full w-full flex flex-col bg-[#0a0a1a]">
+      {/* Toolbar */}
+      <div className="flex items-center h-8 px-2 bg-[#12122a] border-b border-[#2a2a4a] gap-1 shrink-0">
         <button
-          onClick={() => { setIsPlaying(true); setIsPaused(false); }}
+          onClick={startPlaying}
           className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-            isPlaying && !isPaused ? 'bg-nova-accent text-white' : 'bg-nova-surface/80 backdrop-blur text-nova-text hover:bg-nova-hover border border-nova-border'
+            isPlaying && !isPaused
+              ? 'bg-green-500 text-white'
+              : 'bg-[#1a1a35] text-[#6a6a8a] hover:text-white border border-[#2a2a4a]'
           }`}
         >
           ▶ Play
         </button>
         <button
-          onClick={() => setIsPaused(true)}
+          onClick={pausePlaying}
           disabled={!isPlaying}
           className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-            isPaused ? 'bg-nova-warning text-white' : 'bg-nova-surface/80 backdrop-blur text-nova-text hover:bg-nova-hover border border-nova-border'
-          } ${!isPlaying ? 'opacity-40 cursor-not-allowed' : ''}`}
+            isPaused
+              ? 'bg-yellow-500 text-white'
+              : 'bg-[#1a1a35] text-[#6a6a8a] hover:text-white border border-[#2a2a4a] disabled:opacity-50'
+          }`}
         >
           ⏸ Pause
         </button>
         <button
-          onClick={() => { setIsPlaying(false); setIsPaused(false); }}
+          onClick={stopPlaying}
           disabled={!isPlaying}
-          className={`px-3 py-1 rounded text-xs font-medium bg-nova-surface/80 backdrop-blur text-nova-text hover:bg-nova-hover border border-nova-border transition-colors ${!isPlaying ? 'opacity-40 cursor-not-allowed' : ''}`}
+          className="px-3 py-1 rounded text-xs font-medium bg-[#1a1a35] text-[#6a6a8a] hover:text-white border border-[#2a2a4a] disabled:opacity-50"
         >
           ⏹ Stop
         </button>
-      </div>
 
-      {/* Scene name */}
-      <div className="absolute top-2 right-2 text-xs text-nova-muted bg-black/50 backdrop-blur px-2 py-1 rounded border border-nova-border/30">
-        Game
-      </div>
+        <div className="flex-1" />
 
-      {/* Aspect ratio */}
-      <div className="absolute bottom-2 right-2 text-xs text-nova-muted bg-black/50 px-2 py-1 rounded">
-        Free Aspect
-      </div>
+        {isPlaying && (
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-[10px] text-green-400 font-medium">Playing</span>
+          </div>
+        )}
 
-      {/* Play mode indicator */}
-      {isPlaying && (
-        <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
-          <span className={`w-2 h-2 rounded-full ${isPaused ? 'bg-nova-warning' : 'bg-nova-success'} ${isPaused ? '' : 'animate-pulse'}`} />
-          <span className="text-xs text-nova-muted">{isPaused ? 'PAUSED' : 'PLAYING'}</span>
+        <div className="text-[10px] text-[#6a6a8a] px-2">
+          {isPaused ? 'PAUSED' : isPlaying ? `${60} FPS` : 'Stopped'}
         </div>
-      )}
+      </div>
+
+      {/* Viewport */}
+      <div ref={containerRef} className="flex-1 relative">
+        <Canvas
+          camera={{ position: [6, 5, 6], fov: 60 }}
+          className="bg-[#0a0a1a]"
+          gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
+        >
+          <Suspense fallback={null}>
+            <GameScene />
+            <OrbitControls makeDefault />
+          </Suspense>
+        </Canvas>
+
+        {/* Resolution overlay */}
+        <div className="absolute top-2 right-2 text-[10px] text-[#6a6a8a] bg-[#12122a]/60 backdrop-blur px-2 py-0.5 rounded border border-[#2a2a4a]">
+          Game | 1920x1080
+        </div>
+      </div>
     </div>
   );
 }

@@ -10,6 +10,7 @@ interface SceneState {
   selectedGameObject: GameObjectDto | null;
   clipboard: GameObjectDto | null;
   loading: boolean;
+  currentSceneId: string | null;
   setGameObjects: (objects: GameObjectDto[]) => void;
   selectGameObject: (id: string | null) => void;
   addSelection: (id: string) => void;
@@ -36,6 +37,7 @@ export const useSceneStore = create<SceneState>()(
     selectedGameObject: null,
     clipboard: null,
     loading: false,
+    currentSceneId: null,
 
     pushUndo: () => {
       const { gameObjects } = get();

@@ -143,8 +143,9 @@ export interface PackageDto {
 export interface EditorTab {
   id: string;
   label: string;
-  type: 'scene' | 'script' | 'shader' | 'material' | 'animation' | 'timeline';
+  type: 'scene' | 'script' | 'shader' | 'material' | 'animation' | 'timeline' | 'terrain' | 'behaviour' | 'visualscript';
   data?: any;
+  modified?: boolean;
 }
 
 export interface ConsoleEntry {
@@ -155,7 +156,16 @@ export interface ConsoleEntry {
   timestamp: Date;
 }
 
-export type PanelId = 'hierarchy' | 'inspector' | 'scene' | 'game' | 'assets' | 'console' | 'profiler' | 'animation' | 'timeline' | 'ai' | 'lighting';
+export type PanelId =
+  | 'hierarchy' | 'inspector' | 'scene' | 'game'
+  | 'assets' | 'console' | 'profiler' | 'animation'
+  | 'timeline' | 'ai' | 'lighting' | 'material'
+  | 'shader' | 'terrain' | 'script' | 'navigation'
+  | 'physics' | 'build' | 'versionControl'
+  | 'terminal' | 'packageManager' | 'animationWindow'
+  | 'shaderGraph' | 'materialEditor' | 'lightingWindow'
+  | 'navigationWindow' | 'physicsDebugger' | 'searchEverywhere'
+  | 'assetStore' | 'gameView';
 
 export interface PanelState {
   id: PanelId;
@@ -164,10 +174,255 @@ export interface PanelState {
   width?: number;
   height?: number;
   position?: { x: number; y: number };
+  floating?: boolean;
+  dockZone?: DockZone;
+  tabGroup?: string;
 }
 
 export interface Transform {
   position: [number, number, number];
   rotation: [number, number, number];
   scale: [number, number, number];
+}
+
+export interface Size {
+  width: number;
+  height: number;
+}
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export type DockZone = 'left' | 'right' | 'top' | 'bottom' | 'center' | 'tab';
+
+export interface LayoutConfig {
+  id: string;
+  name: string;
+  panels: Record<PanelId, PanelState>;
+  zones: DockZoneConfig[];
+}
+
+export interface DockZoneConfig {
+  id: string;
+  zone: DockZone;
+  panelIds: PanelId[];
+  activeTab?: PanelId;
+  size?: number;
+  splitDirection?: 'horizontal' | 'vertical';
+  children?: DockZoneConfig[];
+}
+
+export interface ThemeConfig {
+  mode: 'dark' | 'light';
+  accent: string;
+  background: string;
+  surface: string;
+  surface2: string;
+  text: string;
+  muted: string;
+  border: string;
+  hover: string;
+  active: string;
+}
+
+export interface Command {
+  id: string;
+  label: string;
+  category: string;
+  shortcut?: string;
+  icon?: string;
+  action: () => void;
+}
+
+export interface Bookmark {
+  id: string;
+  name: string;
+  position: [number, number, number];
+  target: [number, number, number];
+  sceneId: string;
+}
+
+export interface LayerInfo {
+  id: number;
+  name: string;
+  visible: boolean;
+  locked: boolean;
+}
+
+export interface SceneSettings {
+  skybox?: string;
+  fogColor?: string;
+  fogMode?: 'linear' | 'exponential';
+  fogDensity?: number;
+  ambientColor?: string;
+  ambientIntensity?: number;
+  reflectionSource?: string;
+}
+
+export interface AnimationClip {
+  id: string;
+  name: string;
+  length: number;
+  loop: boolean;
+  curves: AnimationCurve[];
+  events: AnimationEvent[];
+}
+
+export interface AnimationCurve {
+  path: string;
+  property: string;
+  keys: Keyframe[];
+}
+
+export interface Keyframe {
+  time: number;
+  value: number;
+  inTangent?: number;
+  outTangent?: number;
+}
+
+export interface AnimationEvent {
+  time: number;
+  functionName: string;
+  parameters?: string;
+}
+
+export interface AnimationState {
+  name: string;
+  clipId: string;
+  speed: number;
+  loop: boolean;
+  transitions: AnimationTransition[];
+}
+
+export interface AnimationTransition {
+  from: string;
+  to: string;
+  duration: number;
+  conditions: AnimationCondition[];
+}
+
+export interface AnimationCondition {
+  parameter: string;
+  operator: 'equals' | 'notEquals' | 'greaterThan' | 'lessThan';
+  value: number | boolean;
+}
+
+export interface NavMeshData {
+  vertices: Float32Array;
+  indices: Uint32Array;
+  areas: Uint8Array;
+}
+
+export interface Waypoint {
+  position: [number, number, number];
+  waitTime: number;
+}
+
+export interface ShaderNode {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  inputs: ShaderNodePort[];
+  outputs: ShaderNodePort[];
+  properties: Record<string, any>;
+}
+
+export interface ShaderNodePort {
+  id: string;
+  name: string;
+  type: 'float' | 'vec2' | 'vec3' | 'vec4' | 'color' | 'texture2d' | 'sampler' | 'bool' | 'int';
+}
+
+export interface ShaderEdge {
+  id: string;
+  source: string;
+  sourcePort: string;
+  target: string;
+  targetPort: string;
+}
+
+export interface MaterialProperty {
+  name: string;
+  type: 'float' | 'int' | 'color' | 'texture' | 'vector2' | 'vector3' | 'vector4' | 'range';
+  value: any;
+  range?: [number, number];
+  defaultValue?: any;
+}
+
+export interface BuildSettings {
+  target: 'web' | 'windows' | 'linux' | 'macos' | 'android' | 'ios';
+  compression: 'none' | 'gzip' | 'brotli';
+  il2cpp: boolean;
+  developmentBuild: boolean;
+  autoconnectProfiler: boolean;
+  scriptOnly: boolean;
+  outputPath: string;
+  scenes: string[];
+}
+
+export interface ProfilerSnapshot {
+  frame: number;
+  fps: number;
+  cpu: number;
+  gpu: number;
+  ram: number;
+  drawCalls: number;
+  triangles: number;
+  batches: number;
+  shaderTime: number;
+  gcAlloc: number;
+}
+
+export interface VersionControlFile {
+  path: string;
+  status: 'modified' | 'added' | 'deleted' | 'untracked' | 'conflict';
+  staged: boolean;
+}
+
+export interface PhysicsMaterial {
+  friction: number;
+  bounciness: number;
+  frictionCombine: 'average' | 'minimum' | 'maximum' | 'multiply';
+  bounceCombine: 'average' | 'minimum' | 'maximum' | 'multiply';
+}
+
+export interface TerrainLayer {
+  name: string;
+  texture: string;
+  tileSize: [number, number];
+  metallic: number;
+  smoothness: number;
+}
+
+export interface TerrainSettings {
+  width: number;
+  length: number;
+  height: number;
+  resolution: number;
+  layers: TerrainLayer[];
+}
+
+export interface LODGroup {
+  levels: LODLevel[];
+}
+
+export interface LODLevel {
+  screenPercent: number;
+  renderers: string[];
+}
+
+export interface EditorHistoryEntry {
+  type: 'gameObjectAdded' | 'gameObjectRemoved' | 'gameObjectModified' | 'componentAdded' | 'componentRemoved' | 'componentModified';
+  timestamp: number;
+  data: any;
 }
