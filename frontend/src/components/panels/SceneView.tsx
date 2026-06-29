@@ -56,7 +56,7 @@ export default function SceneView({ onSelectObject, showMiniViewport = false }: 
 
   const gameObjects = useSceneStore((s) => s.gameObjects);
   const selectedIds = useSceneStore((s) => s.selectedIds);
-  const selectObject = useSceneStore((s) => s.selectObject);
+  const selectGameObject = useSceneStore((s) => s.selectGameObject);
   const sceneSettings = useUiStore((s) => s.sceneSettings);
   const gizmoMode = useUiStore((s) => s.gizmoMode);
   const [shadingMode, setShadingMode] = useState<'shaded' | 'wireframe'>('shaded');
@@ -94,16 +94,16 @@ export default function SceneView({ onSelectObject, showMiniViewport = false }: 
     gizmo.scaleGizmoEnabled = false;
     gizmo.usePointerToAttachGizmos = false;
 
-    scene.onPointerDown = (_, pickInfo) => {
+    scene.onPointerDown = (_: any, pickInfo: any) => {
       if (pickInfo?.hit && pickInfo.pickedMesh) {
         const oid = pickInfo.pickedMesh.metadata?.gameObjectId;
         if (oid) {
-          selectObject(oid);
+          selectGameObject(oid);
           onSelectObject?.(oid);
           return;
         }
       }
-      selectObject(null);
+      selectGameObject(null);
       onSelectObject?.(null);
     };
 
@@ -182,7 +182,8 @@ export default function SceneView({ onSelectObject, showMiniViewport = false }: 
     gizmo.positionGizmoEnabled = gizmoMode === 'translate';
     gizmo.rotationGizmoEnabled = gizmoMode === 'rotate';
     gizmo.scaleGizmoEnabled = gizmoMode === 'scale';
-    gizmo.attachedMesh = selectedIds.length === 1 ? meshMapRef.current.get(selectedIds[0]) ?? null : null;
+    const gizmoAttach = gizmo as any;
+    gizmoAttach.attachedMesh = selectedIds.length === 1 ? meshMapRef.current.get(selectedIds[0]) ?? null : null;
   }, [gizmoMode, selectedIds]);
 
   // Fog
@@ -202,8 +203,7 @@ export default function SceneView({ onSelectObject, showMiniViewport = false }: 
   useEffect(() => {
     const scene = sceneRef.current;
     if (!scene) return;
-    scene.forceWireframe = shadingMode === 'wireframe';
-    scene.forcePoints = false;
+    (scene as any).forceWireframe = shadingMode === 'wireframe';
   }, [shadingMode]);
 
   return (

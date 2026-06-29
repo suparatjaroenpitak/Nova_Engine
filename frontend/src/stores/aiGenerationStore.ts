@@ -72,7 +72,7 @@ export const useAIGenerationStore = create<AIGenerationState>((set, get) => ({
         imageUrl: state.imageFile ? URL.createObjectURL(state.imageFile) : undefined,
         options: DEFAULT_GENERATION_OPTIONS,
       };
-      const job = await ai3dApi.submitJob({ projectId, request });
+      const { data: job } = await ai3dApi.submitJob({ projectId, request });
       set((s) => ({ jobs: [job, ...s.jobs], activeJobId: job.id, generating: false }));
     } catch (e: any) {
       set({ error: e?.message || 'Failed to submit job', generating: false });
@@ -93,7 +93,7 @@ export const useAIGenerationStore = create<AIGenerationState>((set, get) => ({
 
   retryJob: async (jobId) => {
     try {
-      const job = await ai3dApi.retryJob(jobId);
+      const { data: job } = await ai3dApi.retryJob(jobId);
       set((s) => ({ jobs: s.jobs.map((j) => j.id === jobId ? job : j) }));
     } catch (e: any) {
       set({ error: e?.message || 'Failed to retry job' });
@@ -104,7 +104,7 @@ export const useAIGenerationStore = create<AIGenerationState>((set, get) => ({
     const projectId = useProjectStore.getState().currentProject?.id;
     if (!projectId) return;
     try {
-      const jobs = await ai3dApi.listJobs(projectId);
+      const { data: jobs } = await ai3dApi.listJobs(projectId);
       set({ jobs });
     } catch (e: any) {
       set({ error: e?.message || 'Failed to load jobs' });
@@ -113,7 +113,7 @@ export const useAIGenerationStore = create<AIGenerationState>((set, get) => ({
 
   fetchColabStatus: async () => {
     try {
-      const status = await ai3dApi.colabStatus();
+      const { data: status } = await ai3dApi.colabStatus();
       set({ colabStatus: status });
     } catch {}
   },

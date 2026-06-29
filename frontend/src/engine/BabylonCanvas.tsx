@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { Engine } from '@babylonjs/core/Engines/engine';
 import { Scene } from '@babylonjs/core/scene';
 import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
@@ -126,9 +126,4 @@ export default function BabylonCanvas({
   );
 }
 
-export function useBabylonScene() {
-  const getScene = useCallback(() => sceneRef.current, []);
-  const getEngine = useCallback(() => engineRef.current, []);
-  const getCanvas = useCallback(() => canvasRef.current, []);
-  return { getScene, getEngine, getCanvas };
-}
+export type { BabylonCanvasProps } from './BabylonCanvas';

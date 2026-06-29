@@ -2,14 +2,19 @@ import { useEffect, useState } from 'react';
 import { useAIGenerationStore } from '@/stores/aiGenerationStore';
 import { AI_MODELS, type AIGenerationMode, type AIModel } from '@/types/ai3d';
 
+type AIStore = ReturnType<typeof useAIGenerationStore.getState>;
+
 export default function AIGeneration() {
-  const store = useAIGenerationStore();
   const [activeTab, setActiveTab] = useState<'generate' | 'jobs' | 'settings'>('generate');
+  const submitJob = useAIGenerationStore((s) => s.submitJob);
+  const loadJobs = useAIGenerationStore((s) => s.loadJobs);
+  const connectHub = useAIGenerationStore((s) => s.connectHub);
+  const disconnectHub = useAIGenerationStore((s) => s.disconnectHub);
 
   useEffect(() => {
-    store.loadJobs();
-    store.connectHub();
-    return () => { store.disconnectHub(); };
+    loadJobs();
+    connectHub();
+    return () => { disconnectHub(); };
   }, []);
 
   return (
@@ -23,23 +28,37 @@ export default function AIGeneration() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {activeTab === 'generate' && <GeneratePanel store={store} />}
-        {activeTab === 'jobs' && <JobsPanel store={store} />}
-        {activeTab === 'settings' && <SettingsPanel store={store} />}
+        {activeTab === 'generate' && <GeneratePanel />}
+        {activeTab === 'jobs' && <JobsPanel />}
+        {activeTab === 'settings' && <SettingsPanel />}
       </div>
     </div>
   );
 }
 
-function GeneratePanel({ store }: { store: ReturnType<typeof useAIGenerationStore> }) {
+function GeneratePanel() {
+  const mode = useAIGenerationStore((s) => s.mode);
+  const setMode = useAIGenerationStore((s) => s.setMode);
+  const selectedModel = useAIGenerationStore((s) => s.selectedModel);
+  const setSelectedModel = useAIGenerationStore((s) => s.setSelectedModel);
+  const prompt = useAIGenerationStore((s) => s.prompt);
+  const setPrompt = useAIGenerationStore((s) => s.setPrompt);
+  const imageFile = useAIGenerationStore((s) => s.imageFile);
+  const setImageFile = useAIGenerationStore((s) => s.setImageFile);
+  const generating = useAIGenerationStore((s) => s.generating);
+  const error = useAIGenerationStore((s) => s.error);
+  const clearError = useAIGenerationStore((s) => s.clearError);
+  const colabStatus = useAIGenerationStore((s) => s.colabStatus);
+  const submitJob = useAIGenerationStore((s) => s.submitJob);
+
   return (
     <div className="p-3 space-y-3">
       <div className="flex gap-2">
-        <button onClick={() => store.setMode('text-to-3d')}
-          className={`flex-1 py-2 rounded text-[10px] border ${store.mode === 'text-to-3d' ? 'border-[#e94560] bg-[#e94560]/10 text-white' : 'border-[#2a2a4a] text-[#6a6a8a]'}`}
+        <button onClick={() => setMode('text-to-3d')}
+          className={`flex-1 py-2 rounded text-[10px] border ${mode === 'text-to-3d' ? 'border-[#e94560] bg-[#e94560]/10 text-white' : 'border-[#2a2a4a] text-[#6a6a8a]'}`}
         >📝 Text to 3D</button>
-        <button onClick={() => store.setMode('image-to-3d')}
-          className={`flex-1 py-2 rounded text-[10px] border ${store.mode === 'image-to-3d' ? 'border-[#e94560] bg-[#e94560]/10 text-white' : 'border-[#2a2a4a] text-[#6a6a8a]'}`}
+        <button onClick={() => setMode('image-to-3d')}
+          className={`flex-1 py-2 rounded text-[10px] border ${mode === 'image-to-3d' ? 'border-[#e94560] bg-[#e94560]/10 text-white' : 'border-[#2a2a4a] text-[#6a6a8a]'}`}
         >🖼 Image to 3D</button>
       </div>
 
@@ -47,8 +66,8 @@ function GeneratePanel({ store }: { store: ReturnType<typeof useAIGenerationStor
         <div className="text-[10px] text-[#6a6a8a] mb-1">AI Model</div>
         <div className="grid grid-cols-3 gap-1">
           {AI_MODELS.map((m) => (
-            <button key={m.id} onClick={() => store.setSelectedModel(m.id)}
-              className={`p-1.5 rounded text-center border ${store.selectedModel === m.id ? 'border-[#e94560] bg-[#e94560]/10' : 'border-[#2a2a4a] hover:border-[#3a3a5a]'}`}
+            <button key={m.id} onClick={() => setSelectedModel(m.id)}
+              className={`p-1.5 rounded text-center border ${selectedModel === m.id ? 'border-[#e94560] bg-[#e94560]/10' : 'border-[#2a2a4a] hover:border-[#3a3a5a]'}`}
             >
               <div className="text-sm">{m.icon}</div>
               <div className="text-[8px] text-[#e8e8f0] font-medium truncate">{m.name}</div>
@@ -58,25 +77,25 @@ function GeneratePanel({ store }: { store: ReturnType<typeof useAIGenerationStor
         </div>
       </div>
 
-      {store.mode === 'text-to-3d' && (
+      {mode === 'text-to-3d' && (
         <div>
           <div className="text-[10px] text-[#6a6a8a] mb-1">Prompt</div>
-          <textarea value={store.prompt} onChange={(e) => store.setPrompt(e.target.value)}
+          <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)}
             placeholder="Describe the 3D model you want to create..."
             className="w-full h-24 px-2 py-1.5 text-[10px] bg-[#0a0a1a] border border-[#2a2a4a] rounded text-[#e8e8f0] placeholder-[#4a4a6a] resize-none"
           />
         </div>
       )}
 
-      {store.mode === 'image-to-3d' && (
+      {mode === 'image-to-3d' && (
         <div>
           <div className="text-[10px] text-[#6a6a8a] mb-1">Reference Image</div>
           <label className="block border-2 border-dashed border-[#2a2a4a] rounded p-4 text-center cursor-pointer hover:border-[#3a3a5a]">
-            <input type="file" accept="image/*" onChange={(e) => store.setImageFile(e.target.files?.[0] || null)} className="hidden" />
-            {store.imageFile ? (
+            <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} className="hidden" />
+            {imageFile ? (
               <div>
-                <img src={URL.createObjectURL(store.imageFile)} className="max-h-32 mx-auto rounded" />
-                <div className="text-[9px] text-[#6a6a8a] mt-1">{store.imageFile.name}</div>
+                <img src={URL.createObjectURL(imageFile)} className="max-h-32 mx-auto rounded" />
+                <div className="text-[9px] text-[#6a6a8a] mt-1">{imageFile.name}</div>
               </div>
             ) : (
               <div className="text-[#6a6a8a]">
@@ -89,28 +108,28 @@ function GeneratePanel({ store }: { store: ReturnType<typeof useAIGenerationStor
         </div>
       )}
 
-      <button onClick={store.submitJob} disabled={store.generating}
+      <button onClick={submitJob} disabled={generating}
         className="w-full py-2 bg-gradient-to-r from-[#e94560] to-purple-600 text-white text-[11px] rounded hover:opacity-90 disabled:opacity-50 font-medium"
       >
-        {store.generating ? '⏳ Generating...' : '🚀 Generate 3D Model'}
+        {generating ? '⏳ Generating...' : '🚀 Generate 3D Model'}
       </button>
 
-      {store.error && (
+      {error && (
         <div className="p-2 bg-red-900/30 border border-red-800 rounded text-[10px] text-red-400">
-          {store.error}
-          <button onClick={store.clearError} className="ml-2 text-red-300 hover:text-white">✕</button>
+          {error}
+          <button onClick={clearError} className="ml-2 text-red-300 hover:text-white">✕</button>
         </div>
       )}
 
-      {store.colabStatus && (
+      {colabStatus && (
         <div className="p-2 bg-[#0a0a1a] border border-[#2a2a4a] rounded">
           <div className="text-[9px] font-medium text-[#6a6a8a] mb-1">Colab Status</div>
           <div className="grid grid-cols-2 gap-1 text-[9px]">
             <span className="text-[#4a4a6a]">GPU:</span>
-            <span className="text-[#e8e8f0]">{store.colabStatus.gpu || 'N/A'}</span>
+            <span className="text-[#e8e8f0]">{colabStatus.gpu || 'N/A'}</span>
             <span className="text-[#4a4a6a]">Model:</span>
-            <span className={`${store.colabStatus.modelLoaded ? 'text-green-400' : 'text-yellow-400'}`}>
-              {store.colabStatus.modelLoaded ? 'Loaded' : 'Loading...'}
+            <span className={`${colabStatus.modelLoaded ? 'text-green-400' : 'text-yellow-400'}`}>
+              {colabStatus.modelLoaded ? 'Loaded' : 'Loading...'}
             </span>
           </div>
         </div>
@@ -119,13 +138,17 @@ function GeneratePanel({ store }: { store: ReturnType<typeof useAIGenerationStor
   );
 }
 
-function JobsPanel({ store }: { store: ReturnType<typeof useAIGenerationStore> }) {
+function JobsPanel() {
+  const jobs = useAIGenerationStore((s) => s.jobs);
+  const cancelJob = useAIGenerationStore((s) => s.cancelJob);
+  const retryJob = useAIGenerationStore((s) => s.retryJob);
+
   return (
     <div className="p-2 space-y-1">
-      {store.jobs.length === 0 && (
+      {jobs.length === 0 && (
         <div className="text-center py-8 text-[#6a6a8a] text-[10px]">No generation jobs yet</div>
       )}
-      {store.jobs.map((job) => (
+      {jobs.map((job) => (
         <div key={job.id} className="p-2 bg-[#0f0f25] border border-[#2a2a4a] rounded text-[10px]">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[#e8e8f0] font-medium truncate">{job.prompt || job.mode}</span>
@@ -143,10 +166,10 @@ function JobsPanel({ store }: { store: ReturnType<typeof useAIGenerationStore> }
           )}
           <div className="flex gap-1 mt-1">
             {job.status === 'processing' && (
-              <button onClick={() => store.cancelJob(job.id)} className="px-2 py-0.5 text-[8px] bg-red-800 text-red-300 rounded hover:bg-red-700">Cancel</button>
+              <button onClick={() => cancelJob(job.id)} className="px-2 py-0.5 text-[8px] bg-red-800 text-red-300 rounded hover:bg-red-700">Cancel</button>
             )}
             {job.status === 'failed' && (
-              <button onClick={() => store.retryJob(job.id)} className="px-2 py-0.5 text-[8px] bg-yellow-800 text-yellow-300 rounded hover:bg-yellow-700">Retry</button>
+              <button onClick={() => retryJob(job.id)} className="px-2 py-0.5 text-[8px] bg-yellow-800 text-yellow-300 rounded hover:bg-yellow-700">Retry</button>
             )}
             {job.status === 'completed' && (
               <button className="px-2 py-0.5 text-[8px] bg-green-800 text-green-300 rounded hover:bg-green-700">Preview</button>
@@ -159,7 +182,10 @@ function JobsPanel({ store }: { store: ReturnType<typeof useAIGenerationStore> }
   );
 }
 
-function SettingsPanel({ store }: { store: ReturnType<typeof useAIGenerationStore> }) {
+function SettingsPanel() {
+  const connected = useAIGenerationStore((s) => s.connected);
+  const connectHub = useAIGenerationStore((s) => s.connectHub);
+
   return (
     <div className="p-3 space-y-2">
       <div className="text-[11px] font-medium text-[#e8e8f0]">Generation Settings</div>
@@ -200,9 +226,9 @@ function SettingsPanel({ store }: { store: ReturnType<typeof useAIGenerationStor
           <input type="password" placeholder="Optional" className="w-40 px-1 py-0.5 text-[9px] bg-[#0a0a1a] border border-[#2a2a4a] rounded text-[#e8e8f0] placeholder-[#4a4a6a]" />
         </div>
         <div className="flex items-center mt-2 text-[9px]">
-          <div className={`w-1.5 h-1.5 rounded-full mr-1 ${store.connected ? 'bg-green-400' : 'bg-red-400'}`} />
-          <span className="text-[#6a6a8a]">{store.connected ? 'Connected' : 'Disconnected'}</span>
-          {!store.connected && <button onClick={store.connectHub} className="ml-2 text-[#4488ff] hover:underline">Connect</button>}
+          <div className={`w-1.5 h-1.5 rounded-full mr-1 ${connected ? 'bg-green-400' : 'bg-red-400'}`} />
+          <span className="text-[#6a6a8a]">{connected ? 'Connected' : 'Disconnected'}</span>
+          {!connected && <button onClick={connectHub} className="ml-2 text-[#4488ff] hover:underline">Connect</button>}
         </div>
       </div>
     </div>

@@ -260,6 +260,7 @@ export interface LayerInfo {
 
 export interface SceneSettings {
   skybox?: string;
+  fogEnabled?: boolean;
   fogColor?: string;
   fogMode?: 'linear' | 'exponential';
   fogDensity?: number;
