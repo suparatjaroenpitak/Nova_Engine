@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Nova.Api/Nova.Api.csproj" />
+    <Project Path="src/Nova.Application/Nova.Application.csproj" />
+    <Project Path="src/Nova.Domain/Nova.Domain.csproj" />
+    <Project Path="src/Nova.Infrastructure/Nova.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Nova.Api.Tests/Nova.Api.Tests.csproj" />
+    <Project Path="tests/Nova.Application.Tests/Nova.Application.Tests.csproj" />
+    <Project Path="tests/Nova.Infrastructure.Tests/Nova.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>

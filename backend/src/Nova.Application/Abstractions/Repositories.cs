@@ -39,7 +39,7 @@ public interface ISceneRepository : IRepository<Scene> {
 
 public interface IGameObjectRepository : IRepository<GameObject> { }
 
-public interface IComponentRepository : IRepository<GameObjects.GameComponent> { }
+public interface IComponentRepository : IRepository<Nova.Domain.GameObjects.GameComponent> { }
 
 public interface IAssetRepository : IRepository<Asset> {
     Task<IReadOnlyList<Asset>> ListForProjectAsync(Guid projectId, CancellationToken ct = default);

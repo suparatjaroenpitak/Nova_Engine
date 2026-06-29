@@ -4,7 +4,7 @@ namespace Nova.Domain.Common;
 /// Lightweight result type for operations that can fail predictably (validation,
 /// auth, not-found) without throwing. Keeps the controller layer declarative.
 /// </summary>
-public sealed class Result
+public class Result
 {
     public bool Success { get; init; }
     public string? Error { get; init; }

@@ -1,4 +1,5 @@
 using Nova.Domain.Common;
+using Nova.Domain.Scenes;
 
 namespace Nova.Domain.Projects;
 

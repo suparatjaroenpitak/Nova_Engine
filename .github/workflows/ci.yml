@@ -41,7 +41,7 @@ jobs:
         run: npm run lint
         working-directory: frontend
       - name: Typecheck
-        run: npm run typecheck
+        run: npx tsc --noEmit
         working-directory: frontend
       - name: Build
         run: npm run build
@@ -53,6 +53,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build API image
-        run: docker build -f backend/docker/Nova.Api.Dockerfile backend/
+        run: docker build -f backend/docker/Nova.Api.Dockerfile .
       - name: Build web image
         run: docker build frontend/

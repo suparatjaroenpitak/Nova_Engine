@@ -1,0 +1,49 @@
+{
+  "name": "nova-editor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.0.0",
+    "@react-three/fiber": "^9.0.0",
+    "@monaco-editor/react": "^4.7.0",
+    "axios": "^1.7.0",
+    "babylonjs": "^7.0.0",
+    "babylonjs-loaders": "^7.0.0",
+    "framer-motion": "^12.0.0",
+    "react": "^20.0.0",
+    "react-dom": "^20.0.0",
+    "react-dnd": "^16.0.0",
+    "react-dnd-html5-backend": "^16.0.0",
+    "react-flow-renderer": "^11.0.0",
+    "react-router-dom": "^7.0.0",
+    "react-three-fiber": "^9.0.0",
+    "three": "^0.170.0",
+    "zustand": "^5.0.0",
+    "@microsoft/signalr": "^8.0.0",
+    "react-icons": "^5.0.0",
+    "clsx": "^2.0.0",
+    "immer": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^20.0.0",
+    "@types/react-dom": "^20.0.0",
+    "@types/three": "^0.170.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "autoprefixer": "^10.4.0",
+    "eslint": "^9.0.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0",
+    "vitest": "^3.0.0"
+  }
+}

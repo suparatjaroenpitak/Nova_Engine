@@ -56,8 +56,8 @@ services:
 
   api:
     build:
-      context: ./backend
-      dockerfile: docker/Nova.Api.Dockerfile
+      context: .
+      dockerfile: backend/docker/Nova.Api.Dockerfile
     container_name: nova-api
     restart: unless-stopped
     depends_on:
