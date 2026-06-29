@@ -21,6 +21,7 @@ import TimelinePanel from '@/components/panels/Timeline';
 import MaterialEditor from '@/components/panels/MaterialEditor';
 import ShaderEditor from '@/components/panels/ShaderEditor';
 import TerrainEditor from '@/components/panels/TerrainEditor';
+import ShaderGraph from '@/components/panels/ShaderGraph';
 import AIAssistant from '@/components/panels/AIAssistant';
 import Lighting from '@/components/panels/Lighting';
 import BuildSettings from '@/components/panels/BuildSettings';
@@ -56,6 +57,7 @@ const ALL_PANELS: Record<string, PanelEntry> = {
   lighting: { id: 'lighting', component: <Lighting />, title: 'Lighting', icon: '☀' },
   materialEditor: { id: 'materialEditor', component: <MaterialEditor />, title: 'Material Editor', icon: '🎨' },
   shader: { id: 'shader', component: <ShaderEditor />, title: 'Shader Editor', icon: '💻' },
+  shaderGraph: { id: 'shaderGraph', component: <ShaderGraph />, title: 'Shader Graph', icon: '🔗' },
   terrain: { id: 'terrain', component: <TerrainEditor />, title: 'Terrain', icon: '⛰' },
   script: { id: 'script', component: <ScriptEditor />, title: 'Script', icon: '📄' },
   build: { id: 'build', component: <BuildSettings />, title: 'Build Settings', icon: '🔨' },
@@ -70,8 +72,8 @@ const ALL_PANELS: Record<string, PanelEntry> = {
 const PANEL_ORDER = [
   'hierarchy', 'scene', 'inspector', 'game', 'assets', 'console',
   'profiler', 'animation', 'timeline', 'ai', 'lighting', 'materialEditor',
-  'shader', 'terrain', 'script', 'build', 'versionControl', 'terminal',
-  'navigationWindow', 'physicsDebugger', 'packageManager',
+  'shader', 'shaderGraph', 'terrain', 'script', 'build', 'versionControl', 'terminal',
+  'navigationWindow', 'physicsDebugger', 'packageManager', 'searchEverywhere',
 ];
 
 export default function Editor() {
