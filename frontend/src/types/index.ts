@@ -159,7 +159,7 @@ export interface ConsoleEntry {
 export type PanelId =
   | 'hierarchy' | 'inspector' | 'scene' | 'game'
   | 'assets' | 'console' | 'profiler' | 'animation'
-  | 'timeline' | 'ai' | 'lighting' | 'material'
+  | 'timeline' | 'ai' | 'aiGeneration' | 'lighting' | 'material'
   | 'shader' | 'terrain' | 'script' | 'navigation'
   | 'physics' | 'build' | 'versionControl'
   | 'terminal' | 'packageManager' | 'animationWindow'

@@ -1,382 +1,271 @@
-import { Suspense, useRef, useMemo, useEffect, useState, useCallback } from 'react';
-import { Canvas, useThree, ThreeEvent } from '@react-three/fiber';
-import { OrbitControls, Grid, TransformControls, PivotControls, GizmoHelper, GizmoViewport } from '@react-three/drei';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { Engine } from '@babylonjs/core/Engines/engine';
+import { Scene } from '@babylonjs/core/scene';
+import { ArcRotateCamera } from '@babylonjs/core/Cameras/arcRotateCamera';
+import { FreeCamera } from '@babylonjs/core/Cameras/freeCamera';
+import { Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
+import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
+import { Mesh } from '@babylonjs/core/Meshes/mesh';
+import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
+import { PBRMaterial } from '@babylonjs/core/Materials/PBR/pbrMaterial';
+import { Texture } from '@abbylonjs/core/Materials/Textures/texture';
+import { CubeTexture } from '@babylonjs/core/Materials/Textures/cubeTexture';
+import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
+import { DirectionalLight } from '@babylonjs/core/Lights/directionalLight';
+import { PointLight } from '@babylonjs/core/Lights/pointLight';
+import { SpotLight } from '@babylonjs/core/Lights/spotLight';
+import { ShadowGenerator } from '@babylonjs/core/Lights/Shadows/shadowGenerator';
+import { GizmoManager } from '@babylonjs/core/Gizmos/gizmoManager';
+import { BoundingBoxGizmo } from '@babylonjs/core/Gizmos/boundingBoxGizmo';
+import { HighlightLayer } from '@babylonjs/core/Layers/highlightLayer';
+import { GlowLayer } from '@babylonjs/core/Layers/glowLayer';
+import { AxesViewer } from '@babylonjs/core/Debug/axesViewer';
+import { PointerEventTypes } from '@babylonjs/core/Events/pointerEvents';
+import { ActionManager } from '@babylonjs/core/Actions/actionManager';
+import { ExecuteCodeAction } from '@babylonjs/core/Actions/directActions';
+import '@babylonjs/core/Materials/standardMaterial';
+import '@babylonjs/core/Loading/loadingScreen';
+import '@babylonjs/loaders/glTF';
+import '@babylonjs/core/Culling/ray';
+
 import { useSceneStore } from '@/stores/sceneStore';
 import { useUiStore } from '@/stores/uiStore';
-import { useThemeStore } from '@/stores/themeStore';
-import * as THREE from 'three';
+import type { GameObjectDto, ComponentDto } from '@/types';
+import type { ViewMode } from '@/types/scene';
 
-// --- Scene Lighting ---
-function SceneLighting() {
-  return (
-    <>
-      <ambientLight intensity={0.4} />
-      <directionalLight position={[10, 10, 5]} intensity={1.5} castShadow shadow-mapSize={[2048, 2048]} />
-      <directionalLight position={[-10, -5, -5]} intensity={0.3} />
-      <hemisphereLight args={['#87ceeb', '#333', 0.4]} />
-    </>
-  );
-}
+const MESH_KIND_MAP: Record<string, string> = {
+  box: 'box',
+  sphere: 'sphere',
+  capsule: 'cylinder',
+  cylinder: 'cylinder',
+  plane: 'box',
+  torus: 'torus',
+  cone: 'cylinder',
+  quad: 'box',
+};
 
-// --- Material helpers ---
-function getMaterialForObject(go: any) {
-  const matComp = go.components?.find((c: any) => c.kind === 'MeshRenderer');
-  if (matComp) {
-    try {
-      const props = JSON.parse(matComp.propertiesJson);
-      return {
-        color: props.color || '#4a4a7a',
-        roughness: props.roughness ?? 0.4,
-        metalness: props.metalness ?? 0.6,
-      };
-    } catch {}
+const GEOMETRY_PARAMS: Record<string, (c: ComponentDto) => any> = {
+  box: () => ({ size: 1 }),
+  sphere: () => ({ diameter: 1, segments: 32 }),
+  capsule: () => ({ height: 1, diameter: 0.5 }),
+  cylinder: () => ({ height: 1, diameter: 0.5 }),
+  plane: () => ({ width: 1, height: 1, depth: 0.01 }),
+  torus: () => ({ diameter: 1, thickness: 0.3 }),
+  cone: () => ({ height: 1, diameter: 0.8 }),
+};
+
+function createMesh(kind: string, name: string, scene: Scene): Mesh | null {
+  const params = GEOMETRY_PARAMS[kind];
+  if (!params) return null;
+  const p = params({ id: '', gameObjectId: '', kind, enabled: true, propertiesJson: '', order: 0 });
+  switch (kind) {
+    case 'box': return MeshBuilder.CreateBox(name, p, scene);
+    case 'sphere': return MeshBuilder.CreateSphere(name, p, scene);
+    case 'cylinder': return MeshBuilder.CreateCylinder(name, p, scene);
+    case 'plane': return MeshBuilder.CreateBox(name, p, scene);
+    case 'torus': return MeshBuilder.CreateTorus(name, p, scene);
+    case 'cone': return MeshBuilder.CreateCylinder(name, { ...p, diameterTop: 0 }, scene);
+    default: return null;
   }
-  return { color: '#4a4a7a', roughness: 0.4, metalness: 0.6 };
 }
 
-function getGeometryForObject(go: any) {
-  const filter = go.components?.find((c: any) => c.kind === 'MeshFilter');
-  if (filter) {
-    try {
-      const props = JSON.parse(filter.propertiesJson);
-      const type = props.meshType || 'box';
-      const args = props.args || [1, 1, 1];
-      switch (type) {
-        case 'box': return <boxGeometry args={args} />;
-        case 'sphere': return <sphereGeometry args={args} />;
-        case 'capsule': return <capsuleGeometry args={args} />;
-        case 'cylinder': return <cylinderGeometry args={args} />;
-        case 'plane': return <planeGeometry args={args} />;
-        case 'torus': return <torusGeometry args={args} />;
-        case 'cone': return <coneGeometry args={args} />;
-        default: return <boxGeometry args={[1, 1, 1]} />;
+interface SceneViewProps {
+  onSelectObject?: (id: string | null) => void;
+  showMiniViewport?: boolean;
+}
+
+export default function SceneView({ onSelectObject, showMiniViewport = false }: SceneViewProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const miniCanvasRef = useRef<HTMLCanvasElement>(null);
+  const engineRef = useRef<Engine | null>(null);
+  const sceneRef = useRef<Scene | null>(null);
+  const hlLayerRef = useRef<HighlightLayer | null>(null);
+  const gizmoManagerRef = useRef<GizmoManager | null>(null);
+  const meshMapRef = useRef<Map<string, Mesh>>(new Map());
+  const selectedIdRef = useRef<string | null>(null);
+
+  const gameObjects = useSceneStore((s) => s.gameObjects);
+  const selectedIds = useSceneStore((s) => s.selectedIds);
+  const selectObject = useSceneStore((s) => s.selectObject);
+  const sceneSettings = useUiStore((s) => s.sceneSettings);
+  const viewMode = useUiStore((s) => s.viewMode);
+  const gizmoMode = useUiStore((s) => s.gizmoMode);
+  const gizmoSpace = useUiStore((s) => s.gizmoSpace);
+  const snapping = useUiStore((s) => s.snapping);
+  const snapSize = useUiStore((s) => s.snapSize);
+  const showGrid = useUiStore((s) => s.showGrid);
+  const gridSize = useUiStore((s) => s.gridSize);
+
+  const initScene = useCallback((canvas: HTMLCanvasElement) => {
+    const engine = new Engine(canvas, true, { preserveDrawingBuffer: false }, true);
+    const scene = new Scene(engine);
+    scene.clearColor = new Color4(0.07, 0.07, 0.15, 1);
+    scene.imageProcessingConfiguration.toneMappingEnabled = true;
+    scene.imageProcessingConfiguration.contrast = 0.1;
+
+    const camera = new ArcRotateCamera('sceneCamera', -Math.PI / 4, Math.PI / 3.5, 12, Vector3.Zero(), scene);
+    camera.attachControl(canvas, false);
+    camera.lowerRadiusLimit = 0.5;
+    camera.upperRadiusLimit = 200;
+    camera.lowerBetaLimit = 0.05;
+    camera.upperBetaLimit = Math.PI / 2.05;
+    camera.panningSensibility = 50;
+    camera.wheelPrecision = 2;
+
+    const hemi = new HemisphericLight('hemi', new Vector3(0, 1, 0), scene);
+    hemi.intensity = 0.6;
+
+    const dir = new DirectionalLight('dir', new Vector3(-1, -2, -1), scene);
+    dir.intensity = 0.8;
+    const shadowGen = new ShadowGenerator(2048, dir);
+    shadowGen.useBlurExponentialShadowMap = true;
+    shadowGen.blurKernel = 32;
+
+    const hlLayer = new HighlightLayer('hl', scene);
+
+    const gizmo = new GizmoManager(scene);
+    gizmo.positionGizmoEnabled = false;
+    gizmo.rotationGizmoEnabled = false;
+    gizmo.scaleGizmoEnabled = false;
+    gizmo.usePointerToAttachGizmos = false;
+
+    scene.onPointerDown = (_, pickInfo) => {
+      if (pickInfo?.hit && pickInfo.pickedMesh) {
+        const objId = pickInfo.pickedMesh.metadata?.gameObjectId;
+        if (objId) {
+          selectObject(objId);
+          if (onSelectObject) onSelectObject(objId);
+        }
+      } else {
+        selectObject(null);
+        if (onSelectObject) onSelectObject(null);
       }
-    } catch {}
-  }
-  return <boxGeometry args={[1, 1, 1]} />;
-}
+    };
 
-function getLightProps(go: any) {
-  const light = go.components?.find((c: any) => c.kind === 'Light');
-  if (light) {
-    try {
-      return JSON.parse(light.propertiesJson);
-    } catch {}
-  }
-  return null;
-}
+    engineRef.current = engine;
+    sceneRef.current = scene;
+    hlLayerRef.current = hlLayer;
+    gizmoManagerRef.current = gizmo;
 
-function getCameraProps(go: any) {
-  const cam = go.components?.find((c: any) => c.kind === 'Camera');
-  if (cam) {
-    try {
-      return JSON.parse(cam.propertiesJson);
-    } catch {}
-  }
-  return null;
-}
+    engine.runRenderLoop(() => scene.render());
 
-// --- Scene Object renderer ---
-function SceneObject({
-  id,
-  gameObject,
-  isSelected,
-  onSelect,
-  onRef,
-}: {
-  id: string;
-  gameObject: any;
-  isSelected: boolean;
-  onSelect: (id: string) => void;
-  onRef: (mesh: THREE.Mesh | null) => void;
-}) {
-  const localRef = useRef<THREE.Mesh>(null);
-  const t = gameObject.transform;
-  const mat = getMaterialForObject(gameObject);
-  const lightProps = getLightProps(gameObject);
-  const cameraProps = getCameraProps(gameObject);
+    const resize = new ResizeObserver(() => engine.resize());
+    if (canvas.parentElement) resize.observe(canvas.parentElement);
+
+    return () => {
+      resize.disconnect();
+      engine.stopRenderLoop();
+      scene.dispose();
+      engine.dispose();
+    };
+  }, []);
 
   useEffect(() => {
-    onRef(localRef.current);
-    return () => onRef(null);
-  }, [isSelected]);
-
-  const handleClick = (e: ThreeEvent<MouseEvent>) => {
-    e.stopPropagation();
-    if (e.shiftKey) {
-      useSceneStore.getState().addSelection(id);
-    } else {
-      onSelect(id);
-    }
-  };
-
-  // Render light gizmo for light objects
-  if (lightProps) {
-    const lightColor = lightProps.color || '#ffffff';
-    const intensity = lightProps.intensity ?? 1;
-    const lightType = lightProps.type || 'directional';
-
-    return (
-      <group position={[t.px, t.py, t.pz]} rotation={new THREE.Euler(t.rx, t.ry, t.rz)}>
-        {lightType === 'directional' && <directionalLight color={lightColor} intensity={intensity} castShadow />}
-        {lightType === 'point' && <pointLight color={lightColor} intensity={intensity} distance={lightProps.range || 10} />}
-        {lightType === 'spot' && <spotLight color={lightColor} intensity={intensity} angle={lightProps.angle || Math.PI / 4} penumbra={0.5} castShadow />}
-        {lightType === 'area' && <rectAreaLight color={lightColor} intensity={intensity} width={lightProps.width || 2} height={lightProps.height || 2} />}
-        <mesh onClick={handleClick}>
-          <sphereGeometry args={[0.15, 8, 8]} />
-          <meshBasicMaterial color={lightColor} transparent opacity={0.6} />
-        </mesh>
-      </group>
-    );
-  }
-
-  return (
-    <mesh
-      ref={localRef}
-      position={[t.px, t.py, t.pz]}
-      rotation={new THREE.Euler(t.rx, t.ry, t.rz, 'XYZ')}
-      scale={[t.sx, t.sy, t.sz]}
-      onClick={handleClick}
-      castShadow
-      receiveShadow
-    >
-      {getGeometryForObject(gameObject)}
-      <meshStandardMaterial
-        color={isSelected ? '#e94560' : mat.color}
-        roughness={mat.roughness}
-        metalness={mat.metalness}
-        emissive={isSelected ? new THREE.Color('#e94560') : new THREE.Color('#000000')}
-        emissiveIntensity={isSelected ? 0.15 : 0}
-      />
-    </mesh>
-  );
-}
-
-// --- Selection Box helper ---
-function SelectionBox({ object }: { object: THREE.Mesh | null }) {
-  const [box, setBox] = useState<THREE.Box3 | null>(null);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    return initScene(canvas);
+  }, []);
 
   useEffect(() => {
-    if (object) {
-      const b = new THREE.Box3().setFromObject(object);
-      setBox(b);
+    const scene = sceneRef.current;
+    if (!scene) return;
+
+    const toRemove = new Set(meshMapRef.current.keys());
+    const validIds = new Set<string>();
+
+    for (const go of gameObjects) {
+      validIds.add(go.id);
+      toRemove.delete(go.id);
+
+      let mesh = meshMapRef.current.get(go.id);
+      if (!mesh) {
+        const renderer = go.components.find((c) => c.kind === 'renderer' || c.kind.startsWith('mesh'));
+        const kind = renderer ? (JSON.parse(renderer.propertiesJson || '{}').meshKind || 'box') : 'box';
+        const babKind = MESH_KIND_MAP[kind] || 'box';
+        mesh = createMesh(babKind, go.name, scene);
+        if (mesh) {
+          mesh.metadata = { gameObjectId: go.id };
+          meshMapRef.current.set(go.id, mesh);
+        }
+      }
+      if (mesh) {
+        mesh.position.set(go.transform.px, go.transform.py, go.transform.pz);
+        mesh.position.x = go.transform.px;
+        mesh.position.y = go.transform.py;
+        mesh.position.z = go.transform.pz;
+        mesh.setEnabled(go.isActive);
+      }
+    }
+
+    for (const id of toRemove) {
+      const mesh = meshMapRef.current.get(id);
+      if (mesh) {
+        mesh.dispose();
+        meshMapRef.current.delete(id);
+      }
+    }
+  }, [gameObjects]);
+
+  useEffect(() => {
+    const hl = hlLayerRef.current;
+    if (!hl) return;
+
+    for (const m of meshMapRef.current.values()) {
+      hl.removeMesh(m, true);
+    }
+
+    for (const id of selectedIds) {
+      const mesh = meshMapRef.current.get(id);
+      if (mesh) hl.addMesh(mesh, Color3.FromHexString('#e94560'));
+    }
+  }, [selectedIds]);
+
+  useEffect(() => {
+    const gizmo = gizmoManagerRef.current;
+    if (!gizmo) return;
+    gizmo.positionGizmoEnabled = false;
+    gizmo.rotationGizmoEnabled = false;
+    gizmo.scaleGizmoEnabled = false;
+
+    if (gizmoMode === 'translate') gizmo.positionGizmoEnabled = true;
+    else if (gizmoMode === 'rotate') gizmo.rotationGizmoEnabled = true;
+    else if (gizmoMode === 'scale') gizmo.scaleGizmoEnabled = true;
+
+    const mesh = selectedIds.length === 1 ? meshMapRef.current.get(selectedIds[0]) : null;
+    gizmo.attachedMesh = mesh || null;
+  }, [gizmoMode, selectedIds]);
+
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+    scene.fogMode = sceneSettings.fogEnabled ? Scene.FOGMODE_EXP2 : Scene.FOGMODE_NONE;
+    if (sceneSettings.fogEnabled) {
+      scene.fogDensity = sceneSettings.fogDensity || 0.01;
+      scene.fogColor = Color3.FromHexString(sceneSettings.fogColor || '#000000');
+    }
+  }, [sceneSettings]);
+
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+    if (viewMode === 'wireframe') {
+      scene.forceWireframe = true;
+      scene.forcePoints = false;
     } else {
-      setBox(null);
+      scene.forceWireframe = false;
+      scene.forcePoints = false;
     }
-  }, [object]);
-
-  if (!box) return null;
-
-  const size = box.getSize(new THREE.Vector3());
-  const center = box.getCenter(new THREE.Vector3());
+  }, [viewMode]);
 
   return (
-    <lineSegments position={center}>
-      <edgesGeometry args={[new THREE.BoxGeometry(size.x * 1.05, size.y * 1.05, size.z * 1.05)]} />
-      <lineBasicMaterial color="#e94560" transparent opacity={0.8} />
-    </lineSegments>
-  );
-}
-
-// --- Scene Content ---
-function SceneContent() {
-  const { gameObjects, selectedGameObject, selectGameObject, clearSelection } = useSceneStore();
-  const { gizmoMode, gizmoSpace, gridVisible, snapping, snapSize, showGrid, gridSize } = useUiStore();
-  const selectedRef = useRef<THREE.Mesh | null>(null);
-  const { camera, gl } = useThree();
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const [bookmarks, setBookmarks] = useState<{ id: string; name: string; pos: THREE.Vector3; target: THREE.Vector3 }[]>([]);
-
-  const setSelectedRef = useCallback((id: string) => (mesh: THREE.Mesh | null) => {
-    if (id === selectedGameObject?.id) {
-      selectedRef.current = mesh;
-    }
-  }, [selectedGameObject?.id]);
-
-  const handleSceneClick = (e: any) => {
-    if (e.target === e.eventObject) {
-      clearSelection();
-    }
-  };
-
-  return (
-    <>
-      <SceneLighting />
-
-      {/* Infinite Grid */}
-      {gridVisible && (
-        <Grid
-          args={[gridSize || 30, gridSize || 30]}
-          sectionColor="#4a4a7a"
-          cellColor="#2a2a4a"
-          sectionSize={5}
-          cellSize={1}
-          fadeDistance={50}
-          infiniteGrid
-        />
-      )}
-
-      {/* Skybox */}
-      <mesh>
-        <sphereGeometry args={[80, 32, 32]} />
-        <meshBasicMaterial color="#0a0a1a" side={THREE.BackSide} />
-      </mesh>
-
-      {/* Fog */}
-      <fog attach="fog" args={['#0a0a1a', 25, 60]} />
-
-      <OrbitControls
-        makeDefault
-        enableDamping={false}
-      />
-
-      {/* Render all game objects */}
-      {gameObjects.map((go) => (
-        <SceneObject
-          key={go.id}
-          id={go.id}
-          gameObject={go}
-          isSelected={selectedGameObject?.id === go.id}
-          onSelect={(id) => selectGameObject(id)}
-          onRef={setSelectedRef(go.id)}
-        />
-      ))}
-
-      {/* Transform Gizmo */}
-      {selectedGameObject && selectedRef.current && (
-        <>
-          <TransformControls
-            mode={gizmoMode === 'rect' ? 'translate' : gizmoMode}
-            space={gizmoSpace === 'world' ? 'world' : 'local'}
-            object={selectedRef.current}
-            showX
-            showY
-            showZ
-            size={0.6}
-            translationSnap={snapping ? (snapSize || 0.5) : null}
-            rotationSnap={snapping ? THREE.MathUtils.degToRad(15) : null}
-            scaleSnap={snapping ? 0.1 : null}
-          />
-          <SelectionBox object={selectedRef.current} />
-        </>
-      )}
-
-      {/* Scene Gizmo */}
-      <GizmoHelper alignment="bottom-right" margin={[70, 70] as any}>
-        <GizmoViewport
-          axisColors={['#ff4444', '#44ff44', '#4444ff']}
-          labelColor="white"
-        />
-      </GizmoHelper>
-    </>
-  );
-}
-
-// --- Main Scene View ---
-export default function SceneView() {
-  const { gizmoMode, gizmoSpace, gridVisible, snapping, snapSize } = useUiStore();
-  const selectGameObject = useSceneStore((s) => s.selectGameObject);
-  const clearSelection = useSceneStore((s) => s.clearSelection);
-  const [viewIndex, setViewIndex] = useState(0);
-  const views = ['3D', '2D', 'Top', 'Bottom', 'Left', 'Right', 'Front', 'Back'];
-
-  const cameraPositions: Record<string, { pos: [number, number, number]; target: [number, number, number] }> = {
-    '3D': { pos: [6, 5, 6], target: [0, 0, 0] },
-    '2D': { pos: [0, 10, 0], target: [0, 0, 0] },
-    'Top': { pos: [0, 10, 0], target: [0, 0, 0] },
-    'Bottom': { pos: [0, -10, 0], target: [0, 0, 0] },
-    'Left': { pos: [-10, 0, 0], target: [0, 0, 0] },
-    'Right': { pos: [10, 0, 0], target: [0, 0, 0] },
-    'Front': { pos: [0, 0, 10], target: [0, 0, 0] },
-    'Back': { pos: [0, 0, -10], target: [0, 0, 0] },
-  };
-
-  const currentView = views[viewIndex];
-  const camPos = cameraPositions[currentView] || cameraPositions['3D'];
-
-  return (
-    <div className="h-full w-full relative">
-      {/* Toolbar overlay */}
-      <div className="absolute top-2 left-2 flex gap-1 z-10">
-        {views.slice(0, 2).map((v, i) => (
-          <button
-            key={v}
-            onClick={() => setViewIndex(i)}
-            className={`px-2 py-1 rounded text-xs font-medium backdrop-blur transition-all ${
-              viewIndex === i
-                ? 'bg-[#e94560] text-white shadow-lg shadow-red-500/30'
-                : 'bg-[#12122a]/80 border border-[#2a2a4a] text-[#6a6a8a] hover:text-[#e8e8f0]'
-            }`}
-          >
-            {v}
-          </button>
-        ))}
-        <div className="w-px bg-[#2a2a4a] mx-1" />
-        {views.slice(2).map((v, i) => (
-          <button
-            key={v}
-            onClick={() => setViewIndex(i + 2)}
-            className={`px-1.5 py-1 rounded text-[10px] font-medium backdrop-blur transition-all ${
-              viewIndex === i + 2
-                ? 'bg-[#e94560] text-white'
-                : 'bg-[#12122a]/60 border border-[#2a2a4a] text-[#6a6a8a] hover:text-[#e8e8f0]'
-            }`}
-          >
-            {v}
-          </button>
-        ))}
-      </div>
-
-      {/* Gizmo mode indicator */}
-      <div className="absolute top-2 right-2 flex gap-1 z-10">
-        <div className="text-[10px] text-[#6a6a8a] bg-[#12122a]/60 backdrop-blur px-2 py-1 rounded border border-[#2a2a4a] flex items-center gap-1.5">
-          <span className={gizmoMode === 'translate' ? 'text-[#e94560] font-bold' : ''}>Q</span>
-          <span className="text-[#3a3a5a]">|</span>
-          <span className={gizmoMode === 'rotate' ? 'text-[#e94560] font-bold' : ''}>W</span>
-          <span className="text-[#3a3a5a]">|</span>
-          <span className={gizmoMode === 'scale' ? 'text-[#e94560] font-bold' : ''}>E</span>
-          <span className="text-[#3a3a5a]">|</span>
-          <span className={gizmoMode === 'rect' ? 'text-[#e94560] font-bold' : ''}>R</span>
-          <span className="ml-2 text-[#3a3a5a]">|</span>
-          <span className={gizmoSpace === 'local' ? 'text-[#e94560]' : ''}>{gizmoSpace === 'world' ? 'Global' : 'Local'}</span>
-          <span className={snapping ? 'text-[#e94560]' : ''}>Snap</span>
+    <div className="relative w-full h-full overflow-hidden bg-[#07070f]">
+      <canvas ref={canvasRef} className="w-full h-full block outline-none touch-none" />
+      {showMiniViewport && (
+        <div className="absolute bottom-2 right-2 w-48 h-36 border border-[#2a2a4a] rounded overflow-hidden bg-[#0a0a15]">
+          <canvas ref={miniCanvasRef} className="w-full h-full" />
         </div>
-      </div>
-
-      {/* 3D Canvas */}
-      <Canvas
-        shadows
-        camera={{ position: camPos.pos, fov: 55, far: 100 }}
-        className="bg-[#0a0a1a]"
-        onPointerMissed={() => clearSelection()}
-        gl={{
-          antialias: true,
-          toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.0,
-          outputColorSpace: THREE.SRGBColorSpace,
-        }}
-      >
-        <Suspense fallback={null}>
-          <SceneContent />
-        </Suspense>
-      </Canvas>
-
-      {/* Mini viewport */}
-      <div className="absolute bottom-2 right-2 w-28 h-28 bg-[#12122a]/80 backdrop-blur rounded-lg border border-[#2a2a4a] overflow-hidden shadow-lg">
-        <Canvas camera={{ position: [3, 2, 3], fov: 30 }} gl={{ alpha: true }}>
-          <SceneLighting />
-          <OrbitControls enableZoom={false} enablePan={false} />
-          <mesh>
-            <boxGeometry args={[0.5, 0.5, 0.5]} />
-            <meshStandardMaterial color="#e94560" />
-          </mesh>
-        </Canvas>
-      </div>
-
-      {/* Viewport info */}
-      <div className="absolute bottom-2 left-2 text-[10px] text-[#6a6a8a] bg-[#12122a]/60 backdrop-blur px-2 py-0.5 rounded border border-[#2a2a4a]">
-        {currentView} View
-      </div>
+      )}
     </div>
   );
 }
