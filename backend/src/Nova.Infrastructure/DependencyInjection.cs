@@ -92,11 +92,42 @@ public static class DependencyInjection
 
     private static string SanitizeConnectionString(string connStr)
     {
-        // Npgsql requires sslmode=require — fix common truncation issues with URL format
-        if (connStr.Contains("?sslmode") && !connStr.Contains("sslmode="))
-            connStr = connStr.Replace("?sslmode", "?sslmode=require");
-        if (connStr.EndsWith("?sslmode=require&"))
-            connStr = connStr.TrimEnd('&');
+        // Convert URL format (postgresql://user:pass@host/db?sslmode=require)
+        // to key=value format (Host=...;Database=...;Username=...) for Npgsql
+        if (connStr.StartsWith("postgresql://") || connStr.StartsWith("postgres://"))
+        {
+            try
+            {
+                var uri = new Uri(connStr);
+                var parts = new List<string>();
+                parts.Add($"Host={uri.Host}");
+                if (uri.Port > 0) parts.Add($"Port={uri.Port}");
+                parts.Add($"Database={uri.AbsolutePath.TrimStart('/')}");
+                if (!string.IsNullOrEmpty(uri.UserInfo))
+                {
+                    var ui = uri.UserInfo.Split(':');
+                    parts.Add($"Username={ui[0]}");
+                    if (ui.Length > 1) parts.Add($"Password={ui[1]}");
+                }
+                var query = uri.Query.TrimStart('?');
+                if (!string.IsNullOrEmpty(query))
+                {
+                    foreach (var pair in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        var kv = pair.Split('=', 2);
+                        if (kv.Length == 2)
+                            parts.Add($"{kv[0]}={kv[1]}");
+                    }
+                }
+                if (!parts.Any(p => p.StartsWith("sslmode", StringComparison.OrdinalIgnoreCase)))
+                    parts.Add("sslmode=require");
+                return string.Join(';', parts);
+            }
+            catch
+            {
+                // fallback to original if parsing fails
+            }
+        }
         return connStr;
     }
 }
