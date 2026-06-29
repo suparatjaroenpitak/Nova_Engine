@@ -137,6 +137,7 @@ export const useUiStore = create<UiState>()(
         physicsDebugger: { visible: false, order: 27 },
         searchEverywhere: { visible: false, order: 28 },
         gameView: { visible: false, order: 29 },
+        aiGeneration: { visible: false, order: 30 },
       },
       console: [],
       tabs: [],

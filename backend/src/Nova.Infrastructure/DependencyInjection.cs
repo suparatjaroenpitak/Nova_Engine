@@ -70,8 +70,17 @@ public static class DependencyInjection
         // Scripting
         services.AddScoped<IScriptingService, RoslynScriptingService>();
 
-        // GPU compute
-        services.AddScoped<IGpuComputeService, LocalStubGpuComputeService>();
+        // GPU compute — LocalStub by default, Colab when configured
+        var gpuOpts = config.GetSection(GpuOptions.Section);
+        if (gpuOpts["Provider"] == "Colab")
+        {
+            services.AddScoped<ColabGpuComputeService>();
+            services.AddScoped<IGpuComputeService>(sp => sp.GetRequiredService<ColabGpuComputeService>());
+        }
+        else
+        {
+            services.AddScoped<IGpuComputeService, LocalStubGpuComputeService>();
+        }
 
         // AI agents
         services.AddScoped<IAiAgent, LocalAiAgent>();

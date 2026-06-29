@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { Engine } from '@babylonjs/core/Engines/engine';
 import { Scene } from '@babylonjs/core/scene';
 import { ArcRotateCamera } from '@babylonjs/core/Cameras/arcRotateCamera';
@@ -58,8 +58,8 @@ export default function SceneView({ onSelectObject, showMiniViewport = false }: 
   const selectedIds = useSceneStore((s) => s.selectedIds);
   const selectObject = useSceneStore((s) => s.selectObject);
   const sceneSettings = useUiStore((s) => s.sceneSettings);
-  const viewMode = useUiStore((s) => s.viewMode);
   const gizmoMode = useUiStore((s) => s.gizmoMode);
+  const [shadingMode, setShadingMode] = useState<'shaded' | 'wireframe'>('shaded');
 
   const init = useCallback((canvas: HTMLCanvasElement) => {
     const engine = new Engine(canvas, true, { preserveDrawingBuffer: false }, true);
@@ -198,13 +198,13 @@ export default function SceneView({ onSelectObject, showMiniViewport = false }: 
     }
   }, [sceneSettings]);
 
-  // View mode
+  // Shading mode
   useEffect(() => {
     const scene = sceneRef.current;
     if (!scene) return;
-    scene.forceWireframe = viewMode === 'wireframe';
+    scene.forceWireframe = shadingMode === 'wireframe';
     scene.forcePoints = false;
-  }, [viewMode]);
+  }, [shadingMode]);
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-[#07070f]">

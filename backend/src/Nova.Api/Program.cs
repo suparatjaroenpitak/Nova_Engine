@@ -109,6 +109,7 @@ if (app.Environment.IsDevelopment())
 app.MapControllers();
 app.MapHub<SceneHub>("/hubs/scene");
 app.MapHub<EditorHub>("/hubs/editor");
+app.MapHub<GenerationHub>("/hubs/generation");
 
 // Hangfire dashboard
 try { app.UseHangfireDashboard("/jobs"); } catch { }

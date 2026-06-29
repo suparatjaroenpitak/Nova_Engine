@@ -1,0 +1,38 @@
+# Nova Engine AI 3D Generation Pipeline — Colab Dependencies
+# Core
+torch>=2.1.0
+torchvision>=0.16.0
+numpy>=1.24.0
+Pillow>=10.0.0
+
+# Web server (runs inside Colab to communicate with ASP.NET backend)
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+httpx>=0.25.0
+python-multipart>=0.0.6
+
+# 3D model processing
+trimesh>=4.0.0
+pygltflib>=1.0.0
+pymeshlab>=2023.12
+open3d>=0.18.0
+
+# AI Model dependencies (model-specific, loaded per request)
+# TRELLIS: https://github.com/microsoft/TRELLIS
+# Hunyuan3D: https://github.com/Tencent/Hunyuan3D
+# Stable Fast 3D: pip install stable-fast-3d
+# TripoSR: https://github.com/VAST-AI-Research/TripoSR
+# InstantMesh: https://github.com/TencentARC/InstantMesh
+
+# Image processing
+opencv-python-headless>=4.8.0
+scipy>=1.11.0
+scikit-image>=0.22.0
+
+# Storage
+boto3>=1.29.0  # MinIO/S3 compatible
+
+# Utilities
+tqdm>=4.66.0
+fastapi>=0.104.0
+sse-starlette>=1.8.0
