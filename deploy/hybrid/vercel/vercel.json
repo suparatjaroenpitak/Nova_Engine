@@ -1,12 +1,12 @@
 {
   "framework": "vite",
-  "buildCommand": "npm run build",
+  "buildCommand": "vite build",
   "outputDirectory": "dist",
-  "installCommand": "npm ci",
+  "installCommand": "npm install --legacy-peer-deps",
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://nova-api.onrender.com/api/$1"
+      "destination": "https://name-jc9v.onrender.com/api/$1"
     },
     {
       "source": "/hubs/(.*)",
