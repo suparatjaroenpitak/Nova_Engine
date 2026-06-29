@@ -56,3 +56,4 @@ minio-data/
 backend-data/
 *.log
 backend/docker/Nova.Api.Dockerfile
+frontend/nginx.conf
