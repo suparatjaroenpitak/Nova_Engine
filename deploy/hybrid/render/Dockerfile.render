@@ -13,7 +13,7 @@ COPY backend/src/Nova.Infrastructure/Nova.Infrastructure.csproj backend/src/Nova
 COPY backend/src/Nova.Api/Nova.Api.csproj backend/src/Nova.Api/
 RUN dotnet restore backend/src/Nova.Api/Nova.Api.csproj
 
-# Build and publish in one step
+# Copy source and rebuild (cache buster: 2026-06-29-v2)
 COPY . .
 RUN dotnet publish backend/src/Nova.Api/Nova.Api.csproj -c Release -o /app/publish
 

@@ -101,13 +101,21 @@ app.MapHub<SceneHub>("/hubs/scene");
 app.MapHub<EditorHub>("/hubs/editor");
 
 // Hangfire dashboard
-app.UseHangfireDashboard("/jobs");
+try { app.UseHangfireDashboard("/jobs"); } catch { }
 
-// Seed admin user
-using (var scope = app.Services.CreateScope())
+// Seed admin user (allow app to start even if DB connection fails)
+try
 {
-    var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
-    await seeder.SeedAsync();
+    using (var scope = app.Services.CreateScope())
+    {
+        var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+        await seeder.SeedAsync();
+    }
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogWarning(ex, "Database seeding failed — app will start without DB. Fix connection string and restart.");
 }
 
 app.Run();
