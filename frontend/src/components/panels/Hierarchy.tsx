@@ -89,7 +89,7 @@ function HierarchyItem({ item, depth }: { item: GameObjectDto; depth: number }) 
            item.components?.some((c) => c.kind === 'AudioSource') ? '♪' : ''}
         </span>
         <span className="truncate">{item.name}</span>
-        <span className="ml-auto text-[10px] text-nova-muted opacity-50">{item.components?.length ?? 0}</span>
+        <span className="ml-auto text-xs text-nova-muted opacity-50">{item.components?.length ?? 0}</span>
       </div>
       <AnimatePresence>
         {expanded && hasChildren && (

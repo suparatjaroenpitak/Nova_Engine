@@ -28,15 +28,15 @@ export default function MaterialEditor() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center gap-2 px-2 py-1 bg-nova-surface border-b border-nova-border">
+      <div className="flex items-center h-7 gap-2 px-2 bg-nova-surface2/30 border-b border-nova-border">
         <input
           value={materialName}
           onChange={(e) => setMaterialName(e.target.value)}
-          className="px-2 py-0.5 bg-nova-bg border border-nova-border rounded text-xs text-nova-text font-medium"
+          className="px-2 py-1 bg-nova-bg border border-nova-border rounded text-xs text-nova-text font-medium"
         />
         <div className="flex-1" />
-        <button className="px-3 py-0.5 bg-nova-accent text-white text-xs rounded">Apply</button>
-        <button className="px-3 py-0.5 bg-nova-hover text-nova-text text-xs rounded">Save</button>
+        <button           className="px-2 py-1 bg-nova-accent text-white text-xs rounded hover:bg-red-600">Apply</button>
+        <button className="px-2 py-1 bg-nova-hover text-nova-text text-xs rounded hover:bg-nova-active">Save</button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">

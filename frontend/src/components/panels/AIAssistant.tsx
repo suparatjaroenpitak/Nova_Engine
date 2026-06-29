@@ -105,7 +105,7 @@ export default function AIAssistant() {
             className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : ''}`}
           >
             {msg.role !== 'user' && (
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-nova-accent to-[#d6304a] flex items-center justify-center text-[10px] font-bold text-white shrink-0 mt-0.5">
+              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-nova-accent to-[#d6304a] flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5">
                 AI
               </div>
             )}
@@ -121,7 +121,7 @@ export default function AIAssistant() {
               <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
             </div>
             {msg.role === 'user' && (
-              <div className="w-6 h-6 rounded-lg bg-nova-hover border border-nova-border flex items-center justify-center text-[10px] font-bold text-nova-muted shrink-0 mt-0.5">
+              <div className="w-6 h-6 rounded-lg bg-nova-hover border border-nova-border flex items-center justify-center text-xs font-bold text-nova-muted shrink-0 mt-0.5">
                 U
               </div>
             )}
@@ -130,7 +130,7 @@ export default function AIAssistant() {
 
         {loading && (
           <div className="flex gap-2">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-nova-accent to-[#d6304a] flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-nova-accent to-[#d6304a] flex items-center justify-center text-xs font-bold text-white shrink-0">
               AI
             </div>
             <div className="bg-nova-surface2/50 border border-nova-border rounded-xl px-3 py-2">
@@ -154,7 +154,7 @@ export default function AIAssistant() {
               <button
                 key={s}
                 onClick={() => handleSend(s)}
-                className="text-[11px] px-2 py-1 rounded-full bg-nova-hover border border-nova-border text-nova-muted hover:text-nova-text hover:border-nova-accent/50 transition-colors"
+                className="text-xs px-2 py-1 rounded-full bg-nova-hover border border-nova-border text-nova-muted hover:text-nova-text hover:border-nova-accent/50 transition-colors"
               >
                 {s}
               </button>

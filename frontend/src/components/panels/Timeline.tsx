@@ -13,17 +13,17 @@ export default function TimelinePanel() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center gap-2 px-2 py-1 border-b border-nova-border">
+      <div className="flex items-center h-7 gap-1 px-2 border-b border-nova-border bg-nova-surface2/30">
         <button
           onClick={() => setIsPlaying(!isPlaying)}
-          className="px-2 py-0.5 text-xs bg-nova-hover text-nova-text rounded"
+          className="px-2 py-1 text-xs bg-nova-hover text-nova-text rounded hover:bg-nova-active"
         >
           {isPlaying ? '⏸' : '▶'}
         </button>
-        <button className="px-2 py-0.5 text-xs bg-nova-hover text-nova-text rounded">⏹</button>
-        <span className="text-xs text-nova-muted">{currentTime.toFixed(1)}s</span>
+        <button className="px-2 py-1 text-xs bg-nova-hover text-nova-text rounded hover:bg-nova-active">⏹</button>
+        <span className="text-xs text-nova-muted ml-2">{currentTime.toFixed(1)}s</span>
         <div className="flex-1" />
-        <button className="px-2 py-0.5 text-xs text-nova-muted hover:text-nova-text">Add Track</button>
+        <button className="px-2 py-1 text-xs text-nova-muted hover:text-nova-text rounded hover:bg-nova-hover">Add Track</button>
       </div>
 
       <div className="flex-1 flex overflow-hidden">

@@ -83,7 +83,7 @@ export default function Lighting() {
                 className="flex-1 px-2 py-1.5 rounded-lg border border-nova-border bg-nova-bg/50 text-center hover:border-nova-accent/50 transition-colors"
               >
                 <div className="w-full h-4 rounded mb-1" style={{ background: p.color }} />
-                <span className="text-[10px] text-nova-muted">{p.label}</span>
+                <span className="text-xs text-nova-muted">{p.label}</span>
               </button>
             ))}
           </div>
@@ -153,7 +153,7 @@ export default function Lighting() {
                 <button
                   key={type}
                   onClick={() => addLight(type)}
-                  className="text-[10px] px-1.5 py-1 rounded bg-nova-hover text-nova-muted hover:text-nova-text hover:bg-nova-active transition-colors"
+                  className="text-xs px-1.5 py-1 rounded bg-nova-hover text-nova-muted hover:text-nova-text hover:bg-nova-active transition-colors"
                   title={`Add ${type} Light`}
                 >
                   +{type[0]}
@@ -173,7 +173,7 @@ export default function Lighting() {
                     className="accent-nova-accent"
                   />
                   <span className="text-xs font-medium text-nova-text">{light.name}</span>
-                  <span className="text-[10px] text-nova-muted">{light.type}</span>
+                  <span className="text-xs text-nova-muted">{light.type}</span>
                 </div>
                 <button onClick={() => removeLight(light.id)} className="text-nova-muted hover:text-red-400 text-xs">
                   ✕
@@ -182,7 +182,7 @@ export default function Lighting() {
               <div className="p-3 space-y-2">
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
-                    <label className="text-[10px] text-nova-muted block mb-0.5">Color</label>
+                    <label className="text-xs text-nova-muted block mb-0.5">Color</label>
                     <input
                       type="color"
                       value={light.color}
@@ -191,7 +191,7 @@ export default function Lighting() {
                     />
                   </div>
                   <div className="flex-1">
-                    <label className="text-[10px] text-nova-muted block mb-0.5">Intensity</label>
+                    <label className="text-xs text-nova-muted block mb-0.5">Intensity</label>
                     <input
                       type="number"
                       value={light.intensity}
@@ -204,7 +204,7 @@ export default function Lighting() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
-                    <label className="text-[10px] text-nova-muted block mb-0.5">Temperature</label>
+                    <label className="text-xs text-nova-muted block mb-0.5">Temperature</label>
                     <input
                       type="number"
                       value={light.temperature}
@@ -217,7 +217,7 @@ export default function Lighting() {
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-1.5 text-[10px] text-nova-muted cursor-pointer">
+                  <label className="flex items-center gap-1.5 text-xs text-nova-muted cursor-pointer">
                     <input
                       type="checkbox"
                       checked={light.shadow}
@@ -227,7 +227,7 @@ export default function Lighting() {
                     Shadows
                   </label>
                   {light.shadow && (
-                    <label className="flex items-center gap-1.5 text-[10px] text-nova-muted cursor-pointer">
+                    <label className="flex items-center gap-1.5 text-xs text-nova-muted cursor-pointer">
                       <input
                         type="checkbox"
                         checked={light.softShadow}

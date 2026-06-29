@@ -66,16 +66,16 @@ export default function ScriptEditor() {
 
   return (
     <div className="h-full flex flex-col bg-nova-bg">
-      <div className="flex items-center gap-2 px-2 py-1 bg-nova-surface border-b border-nova-border">
+      <div className="flex items-center h-7 gap-2 px-2 bg-nova-surface2/30 border-b border-nova-border">
         <input
           value={scriptName}
           onChange={(e) => setScriptName(e.target.value)}
-          className="px-2 py-0.5 bg-nova-bg border border-nova-border rounded text-xs text-nova-text"
+          className="px-2 py-1 bg-nova-bg border border-nova-border rounded text-xs text-nova-text"
         />
         <button
           onClick={handleCompile}
           disabled={isCompiling}
-          className="px-3 py-0.5 bg-nova-accent text-white text-xs rounded hover:bg-red-600 disabled:opacity-50"
+          className="px-2 py-1 bg-nova-accent text-white text-xs rounded hover:bg-red-600 disabled:opacity-50"
         >
           {isCompiling ? 'Compiling...' : 'Compile'}
         </button>

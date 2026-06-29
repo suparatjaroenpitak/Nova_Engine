@@ -12,11 +12,12 @@ export default function Console() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      <div className="flex items-center gap-2 px-2 py-1 border-b border-nova-border bg-nova-surface2/30">
-        <button className="text-xs text-nova-muted hover:text-nova-text">Clear</button>
-        <button onClick={clearConsole} className="text-xs text-nova-muted hover:text-nova-text">Collapse</button>
+      <div className="flex items-center h-7 gap-1 px-2 border-b border-nova-border bg-nova-surface2/30">
+        <button className="px-2 py-1 text-xs text-nova-muted hover:text-nova-text rounded hover:bg-nova-hover">Clear</button>
+        <button onClick={clearConsole} className="px-2 py-1 text-xs text-nova-muted hover:text-nova-text rounded hover:bg-nova-hover">Collapse</button>
         <div className="flex-1" />
         <span className="text-xs text-nova-muted">{entries.length} entries</span>
+        <span className="w-px h-3 bg-nova-border mx-1" />
       </div>
       <div className="flex-1 overflow-y-auto font-mono text-xs">
         {entries.map((entry) => (

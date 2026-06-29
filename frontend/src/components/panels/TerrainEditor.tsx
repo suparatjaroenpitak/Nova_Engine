@@ -14,7 +14,7 @@ export default function TerrainEditor() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center gap-1 px-2 py-1.5 border-b border-nova-border">
+      <div className="flex items-center h-7 gap-1 px-2 border-b border-nova-border bg-nova-surface2/30">
         {tools.map((tool) => (
           <button
             key={tool.id}

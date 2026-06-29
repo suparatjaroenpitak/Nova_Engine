@@ -60,16 +60,16 @@ export default function ShaderEditor() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center gap-2 px-2 py-1 bg-nova-surface border-b border-nova-border">
+      <div className="flex items-center h-7 gap-2 px-2 bg-nova-surface2/30 border-b border-nova-border">
         <input
           value={shaderName}
           onChange={(e) => setShaderName(e.target.value)}
-          className="px-2 py-0.5 bg-nova-bg border border-nova-border rounded text-xs text-nova-text"
+          className="px-2 py-1 bg-nova-bg border border-nova-border rounded text-xs text-nova-text"
         />
-        <button className="px-3 py-0.5 bg-nova-accent text-white text-xs rounded hover:bg-red-600">
+        <button className="px-2 py-1 bg-nova-accent text-white text-xs rounded hover:bg-red-600">
           Compile
         </button>
-        <button className="px-3 py-0.5 bg-nova-hover text-nova-text text-xs rounded">
+        <button className="px-2 py-1 bg-nova-hover text-nova-text text-xs rounded hover:bg-nova-active">
           Preview
         </button>
       </div>

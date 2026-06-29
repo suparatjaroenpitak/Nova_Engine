@@ -8,22 +8,22 @@ export default function AnimationPanel() {
   const clips = ['Idle', 'Walk', 'Run', 'Jump', 'Attack'];
 
   return (
-    <div className="h-full flex flex-col p-2">
-      <div className="flex items-center gap-2 mb-2">
+    <div className="h-full flex flex-col">
+      <div className="flex items-center h-7 gap-1 px-2 border-b border-nova-border bg-nova-surface2/30 shrink-0">
         <button
           onClick={() => setIsPlaying(!isPlaying)}
-          className={`px-3 py-1 text-xs rounded ${isPlaying ? 'bg-nova-accent text-white' : 'bg-nova-hover text-nova-text'}`}
+          className={`px-2 py-1 text-xs rounded ${isPlaying ? 'bg-nova-accent text-white' : 'bg-nova-hover text-nova-text hover:bg-nova-active'}`}
         >
           {isPlaying ? '⏸' : '▶'}
         </button>
-        <button className="px-3 py-1 text-xs bg-nova-hover text-nova-text rounded">⏹</button>
+        <button className="px-2 py-1 text-xs bg-nova-hover text-nova-text rounded hover:bg-nova-active">⏹</button>
         <div className="flex-1" />
         <span className="text-xs text-nova-muted">Frame: {currentFrame}</span>
       </div>
 
-      <div className="flex-1 flex gap-2">
+      <div className="flex-1 flex gap-2 p-2">
         <div className="w-48 border border-nova-border rounded overflow-hidden">
-          <div className="px-2 py-1 bg-nova-surface2/50 text-xs font-medium text-nova-muted uppercase">
+          <div className="flex items-center h-7 px-2 bg-nova-surface2/50 text-xs font-medium text-nova-muted uppercase border-b border-nova-border">
             Animation Clips
           </div>
           {clips.map((clip) => (

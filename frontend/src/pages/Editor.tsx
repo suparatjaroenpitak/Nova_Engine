@@ -205,8 +205,8 @@ export default function Editor() {
               className="absolute left-0 top-0 bottom-0 w-4/5 max-w-sm glass border-r border-nova-border animate-slide-in"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center h-9 px-3 bg-nova-surface2 border-b border-nova-border">
-                <span className="text-sm font-medium text-nova-text capitalize">{mobilePanel}</span>
+              <div className="flex items-center h-7 px-3 bg-nova-surface2 border-b border-nova-border">
+                <span className="text-xs font-medium text-nova-text uppercase tracking-wider">{mobilePanel}</span>
                 <div className="flex-1" />
                 <button onClick={() => setMobilePanel(null)} className="text-nova-muted hover:text-nova-text">&times;</button>
               </div>

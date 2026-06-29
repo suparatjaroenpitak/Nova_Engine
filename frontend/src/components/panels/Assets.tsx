@@ -115,7 +115,7 @@ function AssetGridItem({
         <AssetIcon kind={asset.kind} />
       </div>
       <div className="text-xs text-nova-text truncate font-medium">{asset.name}</div>
-      <div className="text-[10px] text-nova-muted">{formatSize(asset.sizeBytes)}</div>
+      <div className="text-xs text-nova-muted">{formatSize(asset.sizeBytes)}</div>
     </div>
   );
 }
@@ -219,10 +219,10 @@ export default function Assets() {
       onClick={() => setContextMenu(null)}
     >
       {/* Toolbar */}
-      <div className="flex items-center gap-2 px-2 py-1 border-b border-nova-border shrink-0">
+      <div className="flex items-center h-7 gap-2 px-2 border-b border-nova-border bg-nova-surface2/30 shrink-0">
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="px-2 py-0.5 text-xs bg-nova-hover hover:bg-nova-active text-nova-text rounded"
+          className="px-2 py-1 text-xs bg-nova-hover hover:bg-nova-active text-nova-text rounded"
         >
           Import
         </button>
@@ -237,20 +237,20 @@ export default function Assets() {
         <div className="flex gap-0.5 border border-nova-border rounded">
           <button
             onClick={() => setViewMode('grid')}
-            className={`px-1.5 py-0.5 text-xs ${viewMode === 'grid' ? 'bg-nova-active text-white' : 'text-nova-muted hover:text-nova-text'}`}
+            className={`px-1.5 py-1 text-xs ${viewMode === 'grid' ? 'bg-nova-active text-white' : 'text-nova-muted hover:text-nova-text'}`}
             title="Grid view"
           >
             ▦
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`px-1.5 py-0.5 text-xs ${viewMode === 'list' ? 'bg-nova-active text-white' : 'text-nova-muted hover:text-nova-text'}`}
+            className={`px-1.5 py-1 text-xs ${viewMode === 'list' ? 'bg-nova-active text-white' : 'text-nova-muted hover:text-nova-text'}`}
             title="List view"
           >
             ☰
           </button>
         </div>
-        <button className="px-2 py-0.5 text-xs text-nova-muted hover:text-nova-text">Create</button>
+        <button className="px-2 py-1 text-xs text-nova-muted hover:text-nova-text rounded hover:bg-nova-hover">Create</button>
         <input ref={fileInputRef} type="file" multiple onChange={handleFileSelect} className="hidden" />
       </div>
 
