@@ -231,7 +231,7 @@ export default function Assets() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search assets..."
-            className="w-full px-2 py-0.5 text-xs bg-nova-bg border border-nova-border rounded text-nova-text placeholder-nova-muted/50"
+            className="w-full px-2 py-1 text-xs bg-nova-bg border border-nova-border rounded text-nova-text placeholder-nova-muted/50"
           />
         </div>
         <div className="flex gap-0.5 border border-nova-border rounded">
