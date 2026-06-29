@@ -44,9 +44,22 @@ export function useKeyboardShortcuts() {
         return;
       }
 
-      if (e.key === 'z' && (e.metaKey || e.ctrlKey)) {
+      if (e.key === 'z' && (e.metaKey || e.ctrlKey) && e.shiftKey) {
         e.preventDefault();
-        return; // Undo placeholder
+        useSceneStore.getState().redo();
+        return;
+      }
+
+      if (e.key === 'z' && (e.metaKey || e.ctrlKey) && !e.shiftKey) {
+        e.preventDefault();
+        useSceneStore.getState().undo();
+        return;
+      }
+
+      if (e.key === 'y' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        useSceneStore.getState().redo();
+        return;
       }
 
       if (e.key === 'q') {

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import type { GameObjectDto, ComponentDto, TransformDto } from '@/types';
 import { gameObjectsApi } from '@/api/gameObjects';
+import { useUndoStore } from './undoStore';
 
 interface SceneState {
   gameObjects: GameObjectDto[];
@@ -23,6 +24,9 @@ interface SceneState {
   createGameObject: (sceneId: string, name: string, parentId?: string) => Promise<GameObjectDto>;
   deleteGameObject: (id: string) => Promise<void>;
   reparentGameObject: (id: string, newParentId: string | null) => Promise<void>;
+  pushUndo: () => void;
+  undo: () => void;
+  redo: () => void;
 }
 
 export const useSceneStore = create<SceneState>()(
@@ -32,6 +36,27 @@ export const useSceneStore = create<SceneState>()(
     selectedGameObject: null,
     clipboard: null,
     loading: false,
+
+    pushUndo: () => {
+      const { gameObjects } = get();
+      useUndoStore.getState().pushSnapshot(gameObjects);
+    },
+
+    undo: () => {
+      const { gameObjects } = get();
+      const restored = useUndoStore.getState().undo(gameObjects);
+      if (restored) {
+        set({ gameObjects: restored });
+      }
+    },
+
+    redo: () => {
+      const { gameObjects } = get();
+      const restored = useUndoStore.getState().redo(gameObjects);
+      if (restored) {
+        set({ gameObjects: restored });
+      }
+    },
 
     setGameObjects: (objects) => set({ gameObjects: objects }),
 
@@ -53,6 +78,7 @@ export const useSceneStore = create<SceneState>()(
 
     addGameObject: (obj) =>
       set((s) => {
+        get().pushUndo();
         if (!obj.parentId) {
           s.gameObjects.push(obj);
         } else {
@@ -62,12 +88,14 @@ export const useSceneStore = create<SceneState>()(
 
     updateGameObject: (id, updates) =>
       set((s) => {
+        get().pushUndo();
         const obj = findById(s.gameObjects, id);
         if (obj) Object.assign(obj, updates);
       }),
 
     removeGameObject: (id) =>
       set((s) => {
+        get().pushUndo();
         removeById(s.gameObjects, id);
         s.selectedIds = s.selectedIds.filter((i) => i !== id);
       }),
@@ -75,6 +103,7 @@ export const useSceneStore = create<SceneState>()(
     updateTransform: async (id, transform) => {
       const obj = get().selectedGameObject;
       if (obj) {
+        get().pushUndo();
         await gameObjectsApi.update(id, {
           ...obj,
           transform: { ...obj.transform, ...transform },
@@ -87,6 +116,7 @@ export const useSceneStore = create<SceneState>()(
     pasteGameObject: async (sceneId) => {
       const clip = get().clipboard;
       if (clip) {
+        get().pushUndo();
         const obj = await gameObjectsApi.create({ sceneId, name: `${clip.name} (Copy)`, parentId: clip.parentId });
         set((s) => { s.gameObjects.push(obj.data); });
       }
@@ -95,23 +125,27 @@ export const useSceneStore = create<SceneState>()(
     duplicateGameObject: async (id) => {
       const obj = findById(get().gameObjects, id);
       if (obj) {
+        get().pushUndo();
         const newObj = await gameObjectsApi.create({ sceneId: obj.sceneId, name: `${obj.name} (Copy)`, parentId: obj.parentId });
         set((s) => { s.gameObjects.push(newObj.data); });
       }
     },
 
     createGameObject: async (sceneId, name, parentId) => {
+      get().pushUndo();
       const { data } = await gameObjectsApi.create({ sceneId, name, parentId });
       set((s) => { s.gameObjects.push(data); });
       return data;
     },
 
     deleteGameObject: async (id) => {
+      get().pushUndo();
       await gameObjectsApi.delete(id);
       set((s) => { removeById(s.gameObjects, id); });
     },
 
     reparentGameObject: async (id, newParentId) => {
+      get().pushUndo();
       await gameObjectsApi.reparent(id, newParentId, 0);
       set((s) => {
         const obj = findById(s.gameObjects, id);

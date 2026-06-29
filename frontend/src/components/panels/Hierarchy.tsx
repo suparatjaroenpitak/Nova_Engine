@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSceneStore } from '@/stores/sceneStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUiStore } from '@/stores/uiStore';
 import { scenesApi } from '@/api/scenes';
+import { componentsApi } from '@/api/components';
 import type { GameObjectDto } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -10,6 +11,8 @@ function HierarchyItem({ item, depth }: { item: GameObjectDto; depth: number }) 
   const { selectedIds, selectGameObject, addSelection } = useSceneStore();
   const showContextMenuAt = useUiStore((s) => s.showContextMenuAt);
   const [expanded, setExpanded] = useState(true);
+  const [dragOver, setDragOver] = useState(false);
+  const selectedGameObject = useSceneStore((s) => s.selectedGameObject);
   const isSelected = selectedIds.includes(item.id);
   const hasChildren = item.children && item.children.length > 0;
 
@@ -27,15 +30,49 @@ function HierarchyItem({ item, depth }: { item: GameObjectDto; depth: number }) 
     else selectGameObject(item.id);
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('application/nova-asset')) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      setDragOver(true);
+    }
+  };
+
+  const handleDragLeave = () => setDragOver(false);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const raw = e.dataTransfer.getData('application/nova-asset');
+    if (!raw) return;
+    try {
+      const asset = JSON.parse(raw);
+      if (asset.kind === 'Script') {
+        const { selectGameObject: select, createGameObject: create } = useSceneStore.getState();
+        if (!selectedGameObject) {
+          select(item.id);
+        }
+        await componentsApi.add({
+          gameObjectId: item.id,
+          kind: 'ScriptComponent',
+          propertiesJson: JSON.stringify({ scriptAssetId: asset.id, scriptName: asset.name }),
+        });
+      }
+    } catch {}
+  }, [item.id]);
+
   return (
     <div>
       <div
-        className={`flex items-center h-7 px-2 cursor-pointer text-sm select-none ${
-          isSelected ? 'bg-nova-accent/30 text-white' : 'text-nova-text hover:bg-nova-hover'
+        className={`flex items-center h-7 px-2 cursor-pointer text-sm select-none transition-colors ${
+          isSelected ? 'bg-nova-accent/30 text-white' : dragOver ? 'bg-nova-accent/20 text-nova-text' : 'text-nova-text hover:bg-nova-hover'
         }`}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
         {hasChildren && (
           <button
@@ -46,9 +83,13 @@ function HierarchyItem({ item, depth }: { item: GameObjectDto; depth: number }) 
           </button>
         )}
         {!hasChildren && <span className="w-4 mr-1" />}
-        <span className={`w-3 h-3 rounded-sm mr-2 ${item.isActive ? 'bg-nova-accent' : 'bg-nova-muted'}`} />
-        <span>{item.name}</span>
-        <span className="ml-2 text-xs text-nova-muted opacity-50">{item.components?.length ?? 0}</span>
+        <span className={`w-3 h-3 rounded-sm mr-2 flex items-center justify-center text-[8px] font-bold ${item.isActive ? 'bg-nova-accent text-white' : 'bg-nova-muted text-nova-bg'}`}>
+          {item.components?.some((c) => c.kind === 'Camera') ? 'C' :
+           item.components?.some((c) => c.kind === 'Light') ? '💡' :
+           item.components?.some((c) => c.kind === 'AudioSource') ? '♪' : ''}
+        </span>
+        <span className="truncate">{item.name}</span>
+        <span className="ml-auto text-[10px] text-nova-muted opacity-50">{item.components?.length ?? 0}</span>
       </div>
       <AnimatePresence>
         {expanded && hasChildren && (
@@ -95,8 +136,18 @@ export default function Hierarchy() {
     ]);
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('application/nova-asset')) {
+      e.preventDefault();
+    }
+  };
+
   return (
-    <div className="h-full overflow-y-auto" onContextMenu={handleContextMenu}>
+    <div
+      className="h-full overflow-y-auto"
+      onContextMenu={handleContextMenu}
+      onDragOver={handleDragOver}
+    >
       <div className="p-2">
         <button
           onClick={handleCreateEmpty}
