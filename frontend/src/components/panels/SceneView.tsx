@@ -10,12 +10,9 @@ import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
 import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
 import { DirectionalLight } from '@babylonjs/core/Lights/directionalLight';
 import { ShadowGenerator } from '@babylonjs/core/Lights/Shadows/shadowGenerator';
-import '@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent';
 import { HighlightLayer } from '@babylonjs/core/Layers/highlightLayer';
-import '@babylonjs/core/Layers/effectLayer';
 import { GizmoManager } from '@babylonjs/core/Gizmos/gizmoManager';
-import '@babylonjs/core/Loading/loadingScreen';
-import '@babylonjs/loaders/glTF';
+// Side-effect imports (scene components, loaders) are centralized in src/lib/babylon.ts
 
 import { useSceneStore } from '@/stores/sceneStore';
 import { useUiStore } from '@/stores/uiStore';

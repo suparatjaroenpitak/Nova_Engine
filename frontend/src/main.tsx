@@ -1,3 +1,4 @@
+import './lib/babylon'; // Central Babylon.js side-effect imports (must run before any Babylon usage)
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
