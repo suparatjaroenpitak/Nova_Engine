@@ -180,8 +180,8 @@ export default function SceneView({ onSelectObject, showMiniViewport = false }: 
     gizmo.positionGizmoEnabled = gizmoMode === 'translate';
     gizmo.rotationGizmoEnabled = gizmoMode === 'rotate';
     gizmo.scaleGizmoEnabled = gizmoMode === 'scale';
-    const gizmoAttach = gizmo as any;
-    gizmoAttach.attachedMesh = selectedIds.length === 1 ? meshMapRef.current.get(selectedIds[0]) ?? null : null;
+    // attachedMesh is read-only in Babylon v7 — use attachToMesh() instead.
+    gizmo.attachToMesh(selectedIds.length === 1 ? meshMapRef.current.get(selectedIds[0]) ?? null : null);
   }, [gizmoMode, selectedIds]);
 
   // Fog
